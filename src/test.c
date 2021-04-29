@@ -359,4 +359,6 @@ int main(int argc, char** argv) {
 
 
 	printf("\nOverall: %s\n", overall ? "OK" : "FAILED");
+	
+	return overall ? 0 : 1;
 }
