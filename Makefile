@@ -6,20 +6,25 @@ AR       = ar
 ARFLAGS  = rcs
 
 BIN_NAME = demo
-LIB_NAME = libcjson.a
+A_LIB_NAME = libcjson.a
+SO_LIB_NAME = libcjson.so
 
 OBJS     = obj/base.o obj/parse.o obj/query.o obj/stringify.o
 DEPS     = $(OBJS:%.o=%.d)
 
-all: $(BIN_NAME) $(LIB_NAME) test
+all: $(A_LIB_NAME) $(SO_LIB_NAME) $(BIN_NAME) test
 
 
 $(BIN_NAME): obj/demo.o $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^
 
-$(LIB_NAME): CFLAGS += -fPIC
-$(LIB_NAME): $(OBJS)
+$(A_LIB_NAME): CFLAGS += -fPIC
+$(A_LIB_NAME): $(OBJS)
 	$(AR) $(ARFLAGS) $@ $^
+
+$(SO_LIB_NAME): CFLAGS += -fPIC
+$(SO_LIB_NAME): $(OBJS)
+	$(LD) -shared -o $@ $^
 
 test: obj/test.o $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^
@@ -38,4 +43,5 @@ clean:
 	@rm -f obj/*.d
 	@rm -f test
 	@rm -f $(BIN_NAME)
-	@rm -f $(LIB_NAME)
+	@rm -f $(A_LIB_NAME)
+	@rm -f $(SO_LIB_NAME)
