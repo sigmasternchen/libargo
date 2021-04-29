@@ -6,8 +6,8 @@ AR       = ar
 ARFLAGS  = rcs
 
 BIN_NAME = demo
-A_LIB_NAME = libcjson.a
-SO_LIB_NAME = libcjson.so
+A_LIB_NAME = libcson.a
+SO_LIB_NAME = libcson.so
 
 OBJS     = obj/base.o obj/parse.o obj/query.o obj/stringify.o
 DEPS     = $(OBJS:%.o=%.d)
