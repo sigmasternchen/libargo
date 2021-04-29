@@ -1,7 +1,7 @@
 # Cson
 ## JSON Library for C
 
-[![Test Suit](https://github.com/overflowerror/Cson/actions/workflows/test-suit.yml/badge.svg)](https://github.com/overflowerror/Cson/actions/workflows/test-suit.yml)
+[![Test Suit](https://github.com/overflowerror/Cson/actions/workflows/test-suit.yml/badge.svg?branch=main)](https://github.com/overflowerror/Cson/actions/workflows/test-suit.yml)
 
 This library was originaly just a finger exercise to see if I could build a JSON lib from scratch. That also means that I can't guarantee for anything - treat it as highly unstable.
 
