@@ -6,16 +6,6 @@
 
 #include "json.h"
 
-char* strclone(const char* string) {
-	char* clone = malloc(strlen(string) + 1);
-	if (clone == NULL) {
-		fprintf(stderr, "Fuck!\n");
-		exit(1);
-	}
-	strcpy(clone, string);
-	return clone;
-}
-
 int main() {
 	jsonValue_t* value = json_array(true, 4,
 		json_string("Hello"),
