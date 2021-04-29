@@ -1,6 +1,8 @@
 # Cson
 ## JSON Library for C
 
+[![Test Suit](https://github.com/overflowerror/Cson/actions/workflows/test-suit.yml/badge.svg?branch=main)](https://github.com/overflowerror/Cson/actions/workflows/test-suit.yml)
+
 This library was originaly just a finger exercise to see if I could build a JSON lib from scratch. That also means that I can't guarantee for anything - treat it as highly unstable.
 
 Nevertheless you are welcome to use or modify the code as you like. I also appriciate pull requests.
@@ -126,10 +128,15 @@ object_selector := key
 ```
 
 Examples:
+
 `.foobar` will select the corresponding value for the key "foobar" from an object
+
 `.[4]` will select the 5th (index counting starts with 0) from an array
+
 `.[0].foo` will select the key "foo" from the first entry in an array
+
 `.foo.bar.[0]` will select the first element in the key "bar" in the key "foo" in an object
+
 
 Note: As with the `json_array_get()` and `json_object_get()` the returned value is a clone and has to be freed seperately.
 
