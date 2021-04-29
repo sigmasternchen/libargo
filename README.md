@@ -126,10 +126,15 @@ object_selector := key
 ```
 
 Examples:
+
 `.foobar` will select the corresponding value for the key "foobar" from an object
+
 `.[4]` will select the 5th (index counting starts with 0) from an array
+
 `.[0].foo` will select the key "foo" from the first entry in an array
+
 `.foo.bar.[0]` will select the first element in the key "bar" in the key "foo" in an object
+
 
 Note: As with the `json_array_get()` and `json_object_get()` the returned value is a clone and has to be freed seperately.
 
