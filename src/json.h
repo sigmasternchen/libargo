@@ -1,6 +1,7 @@
 #ifndef JSON_H
 #define JSON_H
 
+#include <stdlib.h>
 #include <stdbool.h>
 
 typedef enum {

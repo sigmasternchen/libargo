@@ -3,9 +3,9 @@ YACC = bison
 YFLAGS = -y -d
 CC = gcc
 
-BIN_NAME = marshaller
+BIN_NAME = marshaller-gen
 
-marshaller: src/codegen.c gen/lex.yy.c gen/y.tab.c
+$(BIN_NAME): src/codegen.c gen/lex.yy.c gen/y.tab.c
 	$(CC) -Isrc/ -o $@ $^
 
 gen/y.tab.c gen/y.tab.h: src/parser.y
@@ -19,4 +19,3 @@ gen/lex.yy.c: src/scanner.l gen/y.tab.h
 
 clean:
 	rm -f gen/* $(BIN_NAME)
-

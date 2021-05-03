@@ -37,6 +37,15 @@ obj/%.o: src/%.c obj
 obj:
 	@mkdir -p obj
 
+marshaller-demo: marshaller/gen/demo.tab.c marshaller/demo/demo.c marshaller/marshaller.c $(A_LIB_NAME)
+	$(CC) $(CFLAGS) -Imarshaller/demo/ -Isrc/ -Imarshaller/ -o $@ $^
+
+marshaller/gen/demo.tab.c: marshaller/demo/demo.h marshaller/marshaller-gen
+	./marshaller/marshaller-gen -o $@ $<
+	
+marshaller/marshaller-gen:
+	$(MAKE) -C marshaller/ marshaller-gen
+
 clean:
 	@echo "Cleaning up..."
 	@rm -f obj/*.o
@@ -45,3 +54,4 @@ clean:
 	@rm -f $(BIN_NAME)
 	@rm -f $(A_LIB_NAME)
 	@rm -f $(SO_LIB_NAME)
+	$(MAKE) -C marshaller/ clean
