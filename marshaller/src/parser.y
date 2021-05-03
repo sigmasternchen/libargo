@@ -135,11 +135,6 @@ type: LONG			{ $$ = newTypeInfo(false, "long"); }
 
 %%
 
-void _panic(const char* f, const char* s) {
-	fprintf(stderr, "panic: %s: %s: %s\n", f, s, strerror(errno));
-	exit(3);
-}
-
 void yyerror(char* s) {
 	extern int yylineno;
 	fprintf(stderr, "%s (line %d)\n", s, yylineno);

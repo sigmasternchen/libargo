@@ -18,8 +18,8 @@ void _marshallPanic(const char* name, const char* reason) {
 
 static struct marshaller {
 	const char* name;
-	(jsonValue_t*) (*marshaller)(void*);
-	(void*) (*unmarshaller)(jsonValue_t*);
+	jsonValue_t* (*marshaller)(void*);
+	void* (*unmarshaller)(jsonValue_t*);
 }* marshallerList = NULL;
 static size_t marshallerListLength = 0;
 
@@ -29,9 +29,11 @@ static struct marshaller* findMarshaller(const char* type) {
 			return &marshallerList[i];
 		}
 	}
+	
+	return NULL;
 }
 
-void _registerMarshaller(int namesCount, const char** names, (jsonValue_t*) (*marshaller)(void*),  (void*) (*unmarshaller)(jsonValue_t*)) {
+void _registerMarshaller(int namesCount, const char** names, jsonValue_t* (*marshaller)(void*),  void* (*unmarshaller)(jsonValue_t*)) {
 	marshallerList = realloc(marshallerList, (sizeof(struct marshaller)) * (marshallerListLength + namesCount));
 	if (marshallerList == NULL) {
 		_marshallPanic(names[0], NULL);
@@ -42,7 +44,7 @@ void _registerMarshaller(int namesCount, const char** names, (jsonValue_t*) (*ma
 			_marshallPanic(names[i], "marshaller for name already present");
 		}
 	
-		marshallerList[marshallerListeLength++] = (struct marshaller) {
+		marshallerList[marshallerListLength++] = (struct marshaller) {
 			.name = names[i],
 			.marshaller = marshaller,
 			.unmarshaller = unmarshaller
@@ -78,7 +80,7 @@ jsonValue_t* _json_marshall_value(const char* type, void* value) {
 	} else if (strcmp(type, "bool") == 0) {
 		return json_marshall_bool(value);	
 	} else {
-		struct marshaller marshaller = findMarshaller(type);
+		struct marshaller* marshaller = findMarshaller(type);
 		if (marshaller == NULL) {
 			_marshallPanic(type, "unknown type");
 		}
@@ -101,7 +103,7 @@ static void* json_unmarshall_long(jsonValue_t* value) {
 	return tmp;
 }
 
-static void* json_unmarshall_long(jsonValue_t* value) {
+static void* json_unmarshall_double(jsonValue_t* value) {
 	if (value->type != JSON_DOUBLE)
 		return NULL;
 
@@ -109,7 +111,7 @@ static void* json_unmarshall_long(jsonValue_t* value) {
 	if (tmp == NULL)
 		return NULL;
 		
-	*tmp = value->value.double;
+	*tmp = value->value.real;
 	return tmp;
 }
 
@@ -125,8 +127,8 @@ static void* json_unmarshall_bool(jsonValue_t* value) {
 	return tmp;
 }
 
-static void* json_unmarshall_long(jsonValue_t* value) {
-	if (value->type != JSON_LONG)
+static void* json_unmarshall_string(jsonValue_t* value) {
+	if (value->type != JSON_STRING)
 		return NULL;
 
 	char* tmp = strdup(value->value.string);
@@ -146,7 +148,7 @@ void* _json_unmarshall_value(const char* type, jsonValue_t* value) {
 	} else if (strcmp(type, "bool") == 0) {
 		return json_unmarshall_bool(value);	
 	} else {
-		struct marshaller marshaller = findMarshaller(type);
+		struct marshaller* marshaller = findMarshaller(type);
 		if (marshaller == NULL) {
 			_marshallPanic(type, "unknown type");
 		}

@@ -1,25 +1,42 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <libgen.h>
+#include <getopt.h>
+#include <errno.h>
 
 #include "codegen.h"
 #include "helper.h"
 
 struct declarsinfo* declarations;
 
+extern FILE* yyin;
 extern int yyparse();
 
-void generatePreamble(FILE* output) {
+void _panic(const char* f, const char* s) {
+	fprintf(stderr, "panic: %s: %s: %s\n", f, s, strerror(errno));
+	exit(3);
+}
+
+
+void generatePreamble(FILE* output, char* files[], int fileno) {
 	fprintf(output, "#include <stdlib.h>\n");
 	fprintf(output, "#include <stdbool.h>\n");
 	fprintf(output, "#include <errno.h>\n");
-	fprintf(output, "#include <alloc.h>\n");
+	fprintf(output, "#include <alloca.h>\n");
 	fprintf(output, "\n");
 	fprintf(output, "#include <json.h>\n");
 	fprintf(output, "#include <marshaller.h>\n");
 	fprintf(output, "\n");
+	
+	for (int i = 0; i < fileno; i++) {
+		char* base = basename(files[i]);
+		fprintf(output, "#include <%s>\n", base);
+	}
+	
+	fprintf(output, "\n");
 	fprintf(output, "extern void _marshallPanic(const char*, const char*);\n");
-	fprintf(output, "extern void _registerMarshaller(int, const char**, (jsonValue_t*)(*)(void*), (void*)(*)(jsonValue_t*));\n");
+	fprintf(output, "extern void _registerMarshaller(int, const char**, jsonValue_t*(*)(void*), void*(*)(jsonValue_t*));\n");
 	fprintf(output, "\n");
 }
 
@@ -48,10 +65,11 @@ char* generateMarshallFunction(FILE* output, struct structinfo* info, char* suff
 	strcpy(functionName, MARSHALL_FUNCTION_PREFIX);
 	strcat(functionName, suffix);
 	
-	fprintf(output, "static jsonValue_t* %s(%s* d) {\n", functionName, info->names[0]);
+	fprintf(output, "static jsonValue_t* %s(void* _d) {\n", functionName);
+	fprintf(output, "\t%s* d = (%s*) _d;\n", info->names[0], info->names[0]);
 	fprintf(output, "\tif (d == NULL)\n");
 	fprintf(output, "\t\treturn json_null();\n");
-	fprintf(output, "\tretuen json_object(true, %d\n", info->memberno);
+	fprintf(output, "\treturn json_object(true, %d,\n", info->memberno);
 
 	for (size_t i = 0; i < info->memberno; i++) {
 		struct memberinfo* member = info->members[i];
@@ -60,11 +78,11 @@ char* generateMarshallFunction(FILE* output, struct structinfo* info, char* suff
 		
 		const char* reference = "";
 		
-		if (!member->type->isPointer) {
+		if (!member->type->isPointer && strcmp(member->type->type, "string") != 0) {
 			reference = "&";
 		}
 		
-		fprintf(output, "_json_marshall_value(\"%s\", %s(d->%s))%s\n", member->type->type, reference, member->name, i == info->memberno - 1 ? "," : "");
+		fprintf(output, "_json_marshall_value(\"%s\", (void*) %s(d->%s))%s\n", member->type->type, reference, member->name, i == info->memberno - 1 ? "" : ",");
 	}
 	
 	fprintf(output, "\t);\n");
@@ -83,7 +101,7 @@ char* generateUnmarshallFunction(FILE* output, struct structinfo* info, char* su
 	strcpy(functionName, UNMARSHALL_FUNCTION_PREFIX);
 	strcat(functionName, suffix);
 	
-	fprintf(output, "static %s* %s(jsonValue_t* v) {\n", info->names[0], functionName);
+	fprintf(output, "static void* %s(jsonValue_t* v) {\n", functionName);
 	fprintf(output, "\tif (v->type != JSON_OBJECT) {\n");
 	fprintf(output, "\t\terrno = EINVAL;\n");
 	fprintf(output, "\t\treturn NULL;\n");
@@ -93,11 +111,13 @@ char* generateUnmarshallFunction(FILE* output, struct structinfo* info, char* su
 	fprintf(output, "\t\treturn NULL;\n");
 	fprintf(output, "\tvoid* tmp;\n");
 	
-	
 	for (size_t i = 0; i < info->memberno; i++) {
 		struct memberinfo* member = info->members[i];
-		fprintf(output, "\ttmp = _json_unmarshall_value(\"%s\", json_object_get(v, \"%s\");\n", member->type->type, member->name);
-		if (member->type->isPointer) {
+		fprintf(output, "\ttmp = _json_unmarshall_value(\"%s\", json_object_get(v, \"%s\"));\n", member->type->type, member->name);
+		
+		if (strcmp(member->type->type, "string") == 0) {
+			fprintf(output, "\td->%s = (const char*) tmp;\n", member->name);
+		} else if (member->type->isPointer) {
 			fprintf(output, "\td->%s = (%s*) tmp;\n", member->name, member->type->type);
 		} else {
 			fprintf(output, "\tif (tmp == NULL) {\n");
@@ -111,14 +131,12 @@ char* generateUnmarshallFunction(FILE* output, struct structinfo* info, char* su
 		}
 	}
 	
-	fprintf(output, "\treturn d;\n");
+	fprintf(output, "\treturn (void*) d;\n");
 	
 	fprintf(output, "}\n\n");
 	
 	return functionName;
 }
-
-bool isDefaultType
 
 void generateCodeStruct(FILE* output, struct structinfo* info) {
 	char* suffix = fixStructName(info->names[0]);
@@ -128,9 +146,10 @@ void generateCodeStruct(FILE* output, struct structinfo* info) {
 	
 	fprintf(output, "__attribute__((constructor)) static void _register_marshaller_%s_() {\n", suffix);
 	int namesno = info->names[1] == 0 ? 1 : 2;
-	fprintf(output, "\tchar* tmp = alloca(sizeof(char*) * %d);\n", namesno);
+	fprintf(output, "\tconst char** tmp = alloca(sizeof(char*) * %d);\n", namesno);
 	fprintf(output, "\ttmp[0] = \"%s\";\n", info->names[0]);
-	fprintf(output, "\ttmp[1] = \"%s\";\n", info->names[1]);
+	if (namesno > 1)
+		fprintf(output, "\ttmp[1] = \"%s\";\n", info->names[1]);
 	fprintf(output, "\t_registerMarshaller(%d, tmp, &%s, &%s);\n", namesno, marshall, unmarshall);
 	fprintf(output, "}\n\n");
 	
@@ -140,20 +159,74 @@ void generateCodeStruct(FILE* output, struct structinfo* info) {
 	free(unmarshall);
 }
 
-void generateCode(FILE* output) {
+void generateCode(FILE* output, struct declarsinfo* declarations) {
 	for (size_t i = 0; i < declarations->structno; i++) {
 		generateCodeStruct(output, declarations->structs[i]);
 	}
 }
 
-int main(void) {
-	int result = yyparse();
-	if (result != 0) {
-		return result;
+#define MAX_FILES (10)
+
+int main(int argc, char** argv) {
+	FILE* output = stdout;
+	char* files[MAX_FILES];
+	FILE* input[MAX_FILES];
+	struct declarsinfo* parsed[MAX_FILES];
+	int fileno = 0;
+
+	int opt;
+	while((opt = getopt(argc, argv, "o:")) != -1) {
+		switch(opt) {
+			case 'o':
+				output = fopen(optarg, "w+");
+				if (output == NULL) {
+					panic("fopen");
+				}
+				break;
+			default:
+				fprintf(stderr, "options: -o FILE\n");
+				return 3;
+		}
 	}
 	
-	generatePreamble(stdout);
-	generateCode(stdout);
+	if (optind >= argc) {
+		input[0] = stdin;
+		fileno = 1;
+	} else {
+		while(optind < argc) {
+			if (fileno + 1 >= MAX_FILES) {
+				fprintf(stderr, "file limit reached\n");
+				fprintf(stderr, "re-compile with larger limit\n");
+				return 3;
+			}
+			
+			files[fileno] = argv[optind];
+			input[fileno] = fopen(argv[optind], "r");
+			if (input[fileno] == NULL) {
+				panic(argv[optind]);
+			}
+			
+			fileno++;
+			optind++;
+		}
+	}
+	
+	for (int i = 0; i < fileno; i++) {
+		yyin = input[i];
+	
+		int result = yyparse();
+		if (result != 0) {
+			return result;
+		}
+		
+		parsed[i] = declarations;
+	}
+	
+	generatePreamble(output, files, fileno);
+	
+	for (int i = 0; i < fileno; i++) {
+		generateCode(output, parsed[i]);
+	}
 	
 	return 0;
 }
