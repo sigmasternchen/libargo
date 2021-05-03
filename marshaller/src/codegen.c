@@ -16,7 +16,7 @@ void generatePreamble(FILE* output) {
 	fprintf(output, "#include <alloc.h>\n");
 	fprintf(output, "\n");
 	fprintf(output, "#include <json.h>\n");
-	fprintf(output, "#include <marshall.h>\n");
+	fprintf(output, "#include <marshaller.h>\n");
 	fprintf(output, "\n");
 	fprintf(output, "extern void _marshallPanic(const char*, const char*);\n");
 	fprintf(output, "extern void _registerMarshaller(int, const char**, (jsonValue_t*)(*)(void*), (void*)(*)(jsonValue_t*));\n");
@@ -118,6 +118,8 @@ char* generateUnmarshallFunction(FILE* output, struct structinfo* info, char* su
 	return functionName;
 }
 
+bool isDefaultType
+
 void generateCodeStruct(FILE* output, struct structinfo* info) {
 	char* suffix = fixStructName(info->names[0]);
 	
@@ -127,8 +129,8 @@ void generateCodeStruct(FILE* output, struct structinfo* info) {
 	fprintf(output, "__attribute__((constructor)) static void _register_marshaller_%s_() {\n", suffix);
 	int namesno = info->names[1] == 0 ? 1 : 2;
 	fprintf(output, "\tchar* tmp = alloca(sizeof(char*) * %d);\n", namesno);
-	fprintf(output, "\ttmp[0] = info->names[0];\n");
-	fprintf(output, "\ttmp[1] = info->names[1];\n");
+	fprintf(output, "\ttmp[0] = \"%s\";\n", info->names[0]);
+	fprintf(output, "\ttmp[1] = \"%s\";\n", info->names[1]);
 	fprintf(output, "\t_registerMarshaller(%d, tmp, &%s, &%s);\n", namesno, marshall, unmarshall);
 	fprintf(output, "}\n\n");
 	
