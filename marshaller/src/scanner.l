@@ -26,8 +26,10 @@ string					 "const "?"char"{whitespace}*"*"
 
 %{
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "y.tab.h"
+#include <helper.h>
 %}
 
 <*>"/*"		{ BEGIN(COMMENT); }
@@ -54,9 +56,9 @@ string					 "const "?"char"{whitespace}*"*"
 <INITIAL>"["		{ return OPEN_BRACKETS; }
 <INITIAL>"]"		{ return CLOSE_BRACKETS; }
 
-<INITIAL>{id}		{ return ID; }
-<INITIAL>{hex}		{ yylval = strtol(yytext, NULL, 16); return NUM; }
-<INITIAL>{dec}		{ yylval = strtol(yytext, NULL, 10); return NUM; }
+<INITIAL>{id}		{ yylval.id = strdup(yytext); return ID; }
+<INITIAL>{hex}		{ yylval.number = strtol(yytext, NULL, 16); return NUM; }
+<INITIAL>{dec}		{ yylval.number = strtol(yytext, NULL, 10); return NUM; }
 <INITIAL>{whitespace}+	{ }
 
 <INITIAL>.		{ fprintf(stderr, "lexical error in line %d.\n", yylineno); exit(1); }

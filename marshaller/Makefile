@@ -2,12 +2,11 @@ LEX = flex
 YACC = bison
 YFLAGS = -y -d
 CC = gcc
-LD = gcc
 
 BIN_NAME = marshaller
 
 marshaller: gen/lex.yy.c gen/y.tab.c
-	$(CC) -o $@ $^
+	$(CC) -Isrc/ -o $@ $^
 
 gen/y.tab.c gen/y.tab.h: src/parser.y
 	$(YACC) $(YFLAGS) $<
