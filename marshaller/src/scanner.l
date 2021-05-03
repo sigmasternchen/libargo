@@ -5,19 +5,17 @@ dec		[0-9]+
 hex		[0-9a-fA-F]+H
 number		{dec}|{hex}
 
-int_types				"short"|"byte"|"int"|"long"|"long long"
+int_types				"long long"|"long"|"int"|"byte"|"short"
 unsigned_int_types	"unsigend "{int_types}
 signed_int_types		"signed "{int_types}
 stdint_types_u			"uint8_t"|"uint16_t"|"uint32_t"|"uint64_t"
 stdint_types_s			"int8_t"|"int16_t"|"int32_t"|"int64_t"
 
-integer					int_types|unsigned_int_types|signed_int_types|stdint_types_u|stdint_types_s
+int						{int_types}|{unsigned_int_types}|{signed_int_types}|{stdint_types_u}|{stdint_types_s}
 
-float						"float"|"double"|"long double"
+float						"long double"|"double"|"float"
 
-string					["const "]"char"{whitespace*}"*"
-
-pointer					"*"
+string					 "const "?"char"{whitespace}*"*"
 
 %option noyywrap
 %option nodefault
@@ -38,16 +36,17 @@ pointer					"*"
 <COMMENT>\n	{ }
 <COMMENT>"*"[^*\/\n]*	{ }
 
-<INITIAL>"#"[^\n]"\n"	{ /* includes, macros, ... */ }
+<INITIAL>"//"[^\n]\n		{ /* single line comment */ }
+
+<INITIAL>^"#"[^\n]*"\n"	{ /* includes, macros, ... */ }
 
 <INITIAL>"typedef"	{ return TYPEDEF; }
+<INITIAL>"struct"		{ return STRUCT; }
 
-<INITIAL>"struct"	{ return STRUCT; }
-
-<INITIAL>{integer}	{ return LONG; }
+<INITIAL>{int}		{ return LONG; }
 <INITIAL>{float}	{ return DOUBLE; }
 <INITIAL>{string}	{ return STRING; }
-<INITIAL>{pointer}	{ return POINTER; }
+<INITIAL>"*"		{ return POINTER; }
 
 <INITIAL>";"		{ return SEMICOLON; }
 <INITIAL>"{"		{ return OPEN_BRACES; }

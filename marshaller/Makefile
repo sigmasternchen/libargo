@@ -11,12 +11,12 @@ marshaller: gen/lex.yy.c gen/y.tab.c
 
 gen/y.tab.c gen/y.tab.h: src/parser.y
 	$(YACC) $(YFLAGS) $<
-	mv src/y.tab.c gen/
-	mv src/y.tab.h gen/
+	mv y.tab.c gen/
+	mv y.tab.h gen/
 
 gen/lex.yy.c: src/scanner.l gen/y.tab.h
 	$(LEX) $<
-	mv src/lex.yy.c gen/
+	mv lex.yy.c gen/
 
 clean:
 	rm -f gen/* $(BIN_NAME)
