@@ -5,7 +5,7 @@ CC = gcc
 
 BIN_NAME = marshaller
 
-marshaller: gen/lex.yy.c gen/y.tab.c
+marshaller: src/codegen.c gen/lex.yy.c gen/y.tab.c
 	$(CC) -Isrc/ -o $@ $^
 
 gen/y.tab.c gen/y.tab.h: src/parser.y

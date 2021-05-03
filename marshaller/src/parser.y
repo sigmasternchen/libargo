@@ -7,6 +7,7 @@
 #include <errno.h>
 
 #include <helper.h>
+#include <codegen.h>
 
 int yylex();
 void yyerror(char*);
@@ -54,7 +55,7 @@ char* prefix(char* string, const char* prefix);
 
 file: declars
 				{
-				
+					declarations = $1;
 				}
 ;
 
@@ -133,11 +134,6 @@ type: LONG			{ $$ = newTypeInfo(false, "long"); }
 ;
 
 %%
-
-int main(void) {
-	yyparse();
-	return 0;
-}
 
 void _panic(const char* f, const char* s) {
 	fprintf(stderr, "panic: %s: %s: %s\n", f, s, strerror(errno));
