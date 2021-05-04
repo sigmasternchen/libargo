@@ -178,6 +178,8 @@ char* generateFreeFunction(FILE* output, struct structinfo* info, char* suffix) 
 }
 
 void generateCodeStruct(FILE* output, struct structinfo* info) {
+	fprintf(output, "// struct: %s\n\n", info->names[0]);
+
 	char* suffix = fixStructName(info->names[0]);
 	
 	char* marshall = generateMarshallFunction(output, info, suffix);
@@ -200,7 +202,11 @@ void generateCodeStruct(FILE* output, struct structinfo* info) {
 	free(unmarshall);
 }
 
-void generateCode(FILE* output, struct declarsinfo* declarations) {
+void generateCode(FILE* output, struct declarsinfo* declarations, const char* filename) {
+	fprintf(output, "/*\n");
+	fprintf(output, " * file: %s\n", filename);
+	fprintf(output, "*/\n\n");
+
 	for (size_t i = 0; i < declarations->structno; i++) {
 		generateCodeStruct(output, declarations->structs[i]);
 	}
@@ -255,7 +261,7 @@ int main(int argc, char** argv) {
 	for (int i = 0; i < fileno; i++) {
 		yyin = input[i];
 	
-		int result = yyparse();
+		int result = yyparse(files[i]);
 		if (result != 0) {
 			return result;
 		}
@@ -266,7 +272,7 @@ int main(int argc, char** argv) {
 	generatePreamble(output, files, fileno);
 	
 	for (int i = 0; i < fileno; i++) {
-		generateCode(output, parsed[i]);
+		generateCode(output, parsed[i], files[i]);
 	}
 	
 	return 0;

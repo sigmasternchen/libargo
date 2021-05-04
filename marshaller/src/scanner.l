@@ -17,7 +17,8 @@ long_long				"long long"{whitespace}"int"?
 float						"float"
 double					"double"
 
-string					 "const "?"char"{whitespace}*"*"
+string					"char"{whitespace}*"*"
+const_string			"const"{whitespace}*{string}
 
 %option noyywrap
 %option nodefault
@@ -56,6 +57,7 @@ string					 "const "?"char"{whitespace}*"*"
 <INITIAL>{float}		{ return FLOAT; }
 <INITIAL>{double}		{ return DOUBLE; }
 <INITIAL>{string}		{ return STRING; }
+<INITIAL>{const_string}		{ return CONST_STRING; }
 <INITIAL>"*"			{ return POINTER; }
 
 <INITIAL>";"		{ return SEMICOLON; }

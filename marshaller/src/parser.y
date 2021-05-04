@@ -10,7 +10,7 @@
 #include <codegen.h>
 
 int yylex();
-void yyerror(char*);
+void yyerror(const char*, char*);
 
 struct typeinfo* newTypeInfo(bool isPointer, char* type);
 struct memberinfo* newMemberInfo(struct typeinfo* type, char* name);
@@ -43,11 +43,13 @@ char* prefix(char* string, const char* prefix);
 %type <declarsinfo> file
 
 %token TYPEDEF STRUCT
-%token CHAR SHORT INT LONG LONG_LONG FLOAT DOUBLE STRING STDINT
+%token CHAR SHORT INT LONG LONG_LONG FLOAT DOUBLE STRING CONST_STRING STDINT
 %token POINTER
 %token SEMICOLON OPEN_BRACES CLOSE_BRACES OPEN_BRACKETS CLOSE_BRACKETS
 %token <id> ID
 %token NUM
+
+%parse-param {const char* filename}
 
 %start file
 
@@ -117,7 +119,7 @@ structmember: type ID
 				}
 ;
 
-type: STDINT		{ yyerror("stdint types are not yet supported"); YYERROR; }
+type: STDINT		{ yyerror(filename, ERROR("stdint types are not yet supported")); YYERROR; }
     | CHAR			{ $$ = newTypeInfo(false, "char"); }
     | SHORT			{ $$ = newTypeInfo(false, "short"); }
     | INT			{ $$ = newTypeInfo(false, "int"); }
@@ -126,12 +128,13 @@ type: STDINT		{ yyerror("stdint types are not yet supported"); YYERROR; }
     | FLOAT			{ $$ = newTypeInfo(false, "float"); }
     | DOUBLE		{ $$ = newTypeInfo(false, "double"); }
     | STRING		{ $$ = newTypeInfo(false, "string"); }
+    | CONST_STRING { $$ = newTypeInfo(false, "string"); yyerror(filename, WARN("const char* struct members are discouraged")); }
     | STRUCT ID	{ $$ = newTypeInfo(false, prefix($2, "struct ")); }
     | ID				{ $$ = newTypeInfo(false, $1); }
     | type POINTER
 				{
 					if ($1->isPointer || $1->type == "string") {
-						yyerror("multiple pointer types are not supported");
+						yyerror(filename, ERROR("multiple pointer types are not supported"));
 						YYERROR;
 					} else {
 						$$ = newTypeInfo(true, $1->type);
@@ -141,10 +144,9 @@ type: STDINT		{ yyerror("stdint types are not yet supported"); YYERROR; }
 
 %%
 
-void yyerror(char* s) {
+void yyerror(const char* filename, char* s) {
 	extern int yylineno;
-	fprintf(stderr, "%s (line %d)\n", s, yylineno);
-	exit(2);
+	fprintf(stderr, "%s (%s, line %d)\n", s, filename, yylineno);
 }
 
 struct typeinfo* newTypeInfo(bool isPointer, char* type) {
