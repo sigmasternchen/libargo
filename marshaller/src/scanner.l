@@ -5,7 +5,7 @@ dec		[0-9]+
 hex		[0-9a-fA-F]+H
 number		{dec}|{hex}
 
-int_types				"long long"|"long"|"int"|"byte"|"short"
+int_types				"long long"{whitespace}|"long"|"int"|"byte"|"short"
 unsigned_int_types	"unsigend "{int_types}
 signed_int_types		"signed "{int_types}
 stdint_types_u			"uint8_t"|"uint16_t"|"uint32_t"|"uint64_t"
