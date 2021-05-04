@@ -110,11 +110,13 @@ char* generateUnmarshallFunction(FILE* output, struct structinfo* info, char* su
 	fprintf(output, "\tif (d == NULL)\n");
 	fprintf(output, "\t\treturn NULL;\n");
 	fprintf(output, "\tvoid* tmp;\n");
+	fprintf(output, "\tjsonValue_t* tmpValue;\n");
 	
 	for (size_t i = 0; i < info->memberno; i++) {
 		struct memberinfo* member = info->members[i];
-		fprintf(output, "\ttmp = _json_unmarshall_value(\"%s\", json_object_get(v, \"%s\"));\n", member->type->type, member->name);
-		
+		fprintf(output, "\ttmpValue = json_object_get(v, \"%s\");\n", member->name);
+		fprintf(output, "\ttmp = _json_unmarshall_value(\"%s\", tmpValue);\n", member->type->type);
+		fprintf(output, "\tjson_free(tmpValue);\n");
 		if (strcmp(member->type->type, "string") == 0) {
 			fprintf(output, "\td->%s = (char*) tmp;\n", member->name);
 		} else if (member->type->isPointer) {

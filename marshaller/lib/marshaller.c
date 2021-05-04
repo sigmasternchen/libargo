@@ -120,7 +120,14 @@ jsonValue_t* _json_marshall_value(const char* type, void* value) {
 	}
 }
 char* _json_marshall(const char* type, void* value) {
-	return json_stringify(_json_marshall_value(type, value));
+	jsonValue_t* json = _json_marshall_value(type, value);
+	if (json == NULL)
+		return NULL;
+		
+	char* result = json_stringify(json);
+	json_free(json);
+
+	return result;
 }
 
 static void* json_unmarshall_char(jsonValue_t* value) {
@@ -271,7 +278,7 @@ void* _json_unmarshall(const char* type, const char* json) {
 	}
 	
 	void* tmp = _json_unmarshall_value(type, value);
-	free(value);
+	json_free(value);
 	return tmp;
 }
 
