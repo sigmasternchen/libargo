@@ -37,8 +37,8 @@ obj/%.o: src/%.c obj
 obj:
 	@mkdir -p obj
 
-marshaller-demo: marshaller/gen/demo.tab.c marshaller/demo/demo.c marshaller/marshaller.c $(A_LIB_NAME)
-	$(CC) $(CFLAGS) -Imarshaller/demo/ -Isrc/ -Imarshaller/ -o $@ $^
+marshaller-demo: marshaller/gen/demo.tab.c marshaller/demo/demo.c marshaller/lib/marshaller.c $(A_LIB_NAME)
+	$(CC) $(CFLAGS) -Imarshaller/demo/ -Isrc/ -Imarshaller/lib/ -o $@ $^
 
 marshaller/gen/demo.tab.c: marshaller/demo/demo.h marshaller/marshaller-gen
 	./marshaller/marshaller-gen -o $@ $<
