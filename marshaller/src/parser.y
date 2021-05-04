@@ -43,7 +43,7 @@ char* prefix(char* string, const char* prefix);
 %type <declarsinfo> file
 
 %token TYPEDEF STRUCT
-%token LONG DOUBLE STRING 
+%token CHAR SHORT INT LONG LONG_LONG FLOAT DOUBLE STRING STDINT
 %token POINTER
 %token SEMICOLON OPEN_BRACES CLOSE_BRACES OPEN_BRACKETS CLOSE_BRACKETS
 %token <id> ID
@@ -117,7 +117,13 @@ structmember: type ID
 				}
 ;
 
-type: LONG			{ $$ = newTypeInfo(false, "long"); }
+type: STDINT		{ yyerror("stdint types are not yet supported"); YYERROR; }
+    | CHAR			{ $$ = newTypeInfo(false, "char"); }
+    | SHORT			{ $$ = newTypeInfo(false, "short"); }
+    | INT			{ $$ = newTypeInfo(false, "int"); }
+    | LONG			{ $$ = newTypeInfo(false, "long"); }
+    | LONG_LONG	{ $$ = newTypeInfo(false, "long long"); }
+    | FLOAT			{ $$ = newTypeInfo(false, "float"); }
     | DOUBLE		{ $$ = newTypeInfo(false, "double"); }
     | STRING		{ $$ = newTypeInfo(false, "string"); }
     | STRUCT ID	{ $$ = newTypeInfo(false, prefix($2, "struct ")); }

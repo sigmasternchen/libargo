@@ -5,15 +5,17 @@ dec		[0-9]+
 hex		[0-9a-fA-F]+H
 number		{dec}|{hex}
 
-int_types				"long long"{whitespace}|"long"|"int"|"byte"|"short"
-unsigned_int_types	"unsigend "{int_types}
-signed_int_types		"signed "{int_types}
 stdint_types_u			"uint8_t"|"uint16_t"|"uint32_t"|"uint64_t"
 stdint_types_s			"int8_t"|"int16_t"|"int32_t"|"int64_t"
+stdint_types			{stdint_types_u}|{stdint_types_s}
 
-int						{int_types}|{unsigned_int_types}|{signed_int_types}|{stdint_types_u}|{stdint_types_s}
-
-float						"long double"|"double"|"float"
+char						"char"
+short						"short"({whitespace}"int")?
+int						"int"
+long						"long"({whitespace}"int")?
+long_long				"long long"{whitespace}"int"?
+float						"float"
+double					"double"
 
 string					 "const "?"char"{whitespace}*"*"
 
@@ -45,10 +47,16 @@ string					 "const "?"char"{whitespace}*"*"
 <INITIAL>"typedef"	{ return TYPEDEF; }
 <INITIAL>"struct"		{ return STRUCT; }
 
-<INITIAL>{int}		{ return LONG; }
-<INITIAL>{float}	{ return DOUBLE; }
-<INITIAL>{string}	{ return STRING; }
-<INITIAL>"*"		{ return POINTER; }
+<INITIAL>{stdint_types}	{ return STDINT; }
+<INITIAL>{char}		{ return CHAR; }
+<INITIAL>{short}		{ return SHORT; }
+<INITIAL>{int}			{ return INT; }
+<INITIAL>{long}		{ return LONG; }
+<INITIAL>{long_long}	{ return LONG_LONG; }
+<INITIAL>{float}		{ return FLOAT; }
+<INITIAL>{double}		{ return DOUBLE; }
+<INITIAL>{string}		{ return STRING; }
+<INITIAL>"*"			{ return POINTER; }
 
 <INITIAL>";"		{ return SEMICOLON; }
 <INITIAL>"{"		{ return OPEN_BRACES; }

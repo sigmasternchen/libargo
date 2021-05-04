@@ -116,7 +116,7 @@ char* generateUnmarshallFunction(FILE* output, struct structinfo* info, char* su
 		fprintf(output, "\ttmp = _json_unmarshall_value(\"%s\", json_object_get(v, \"%s\"));\n", member->type->type, member->name);
 		
 		if (strcmp(member->type->type, "string") == 0) {
-			fprintf(output, "\td->%s = (const char*) tmp;\n", member->name);
+			fprintf(output, "\td->%s = (char*) tmp;\n", member->name);
 		} else if (member->type->isPointer) {
 			fprintf(output, "\td->%s = (%s*) tmp;\n", member->name, member->type->type);
 		} else {
