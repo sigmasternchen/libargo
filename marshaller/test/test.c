@@ -106,6 +106,8 @@ void testParsing() {
 	checkBool(all->intPointer == NULL, "int pointer null");
 	checkBool(all->structPointer == NULL, "struct pointer null");
 	
+	json_free_struct(all_t, all);
+	
 	json = "{\
 		\"intValue\": 0,\
 		\"longValue\": 0,\
@@ -136,6 +138,8 @@ void testParsing() {
 	checkNull(all->structPointer, "struct pointer not null");
 	checkInt(*all->intPointer, 1337, "int pointer value");
 	checkInt(all->structPointer->intValue, 42, "struct pointer value");
+	
+	json_free_struct(all_t, all);
 }
 
 void testStringify() {
@@ -162,6 +166,8 @@ void testStringify() {
 	//printf("%s\n", compare);
 	checkString(json, compare, "marshall (no pointers)");
 	
+	free(json);
+	
 	int tmpInt = 64;
 	struct_t tmpStruct = {
 		.intValue = 128
@@ -175,6 +181,8 @@ void testStringify() {
 	json = json_marshall(all_t, &all);
 	
 	checkString(json, compare, "marshall (pointers)");
+	
+	free(json);
 }
 
 void testRecursive() {
@@ -204,6 +212,7 @@ void testRecursive() {
 	r->r->r->r = malloc(sizeof(struct recursive));
 	
 	r->r->r->r->i = level;
+	r->r->r->r->r = NULL;
 	
 	char* result = json_marshall(struct recursive, r);
 	const char* compare = "{\"i\":1,\"r\":{\"i\":2,\"r\":{\"i\":3,\"r\":{\"i\":4,\"r\":null}}}}";
@@ -212,6 +221,9 @@ void testRecursive() {
 	//printf("%s\n", compare);
 	
 	checkString(result, compare, "result ok");
+	
+	json_free_struct(struct recursive, r);
+	free(result);
 }
 
 int main(int argc, char** argv) {
