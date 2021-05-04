@@ -120,7 +120,7 @@ structmember: type ID
 type: LONG			{ $$ = newTypeInfo(false, "long"); }
     | DOUBLE		{ $$ = newTypeInfo(false, "double"); }
     | STRING		{ $$ = newTypeInfo(false, "string"); }
-    | STRUCT ID	{ yyerror("structs without typedef are not yet supported"); YYERROR; }
+    | STRUCT ID	{ $$ = newTypeInfo(false, prefix($2, "struct ")); }
     | ID				{ $$ = newTypeInfo(false, $1); }
     | type POINTER
 				{
