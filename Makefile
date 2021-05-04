@@ -14,7 +14,6 @@ DEPS     = $(OBJS:%.o=%.d)
 
 all: $(A_LIB_NAME) $(SO_LIB_NAME) $(BIN_NAME)
 
-
 $(BIN_NAME): obj/demo.o $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^
 
@@ -26,10 +25,17 @@ $(SO_LIB_NAME): CFLAGS += -fPIC
 $(SO_LIB_NAME): $(OBJS)
 	$(LD) -shared -o $@ $^
 
+marshaller-lib: $(A_LIB_NAME) obj/marshaller.o
+	$(AR) rs $(A_LIB_NAME) obj/marshaller.o
+
 test: obj/test.o $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^
 
 -include $(DEPS)
+
+obj/marshaller.o: CFLAGS += -Isrc/
+obj/marshaller.o: marshaller/lib/marshaller.c
+	$(CC) $(CFLAGS) -MMD -c -o $@ $<
 
 obj/%.o: src/%.c obj
 	$(CC) $(CFLAGS) -MMD -c -o $@ $<
@@ -60,4 +66,5 @@ clean:
 	@rm -f $(BIN_NAME)
 	@rm -f $(A_LIB_NAME)
 	@rm -f $(SO_LIB_NAME)
+	@rm -f marshaller-demo marshaller-test
 	$(MAKE) -C marshaller/ clean
