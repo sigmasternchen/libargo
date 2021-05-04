@@ -104,14 +104,17 @@ static void* json_unmarshall_long(jsonValue_t* value) {
 }
 
 static void* json_unmarshall_double(jsonValue_t* value) {
-	if (value->type != JSON_DOUBLE)
+	if (value->type != JSON_DOUBLE && value->type != JSON_LONG)
 		return NULL;
 
 	double* tmp = malloc(sizeof(double));
 	if (tmp == NULL)
 		return NULL;
 		
-	*tmp = value->value.real;
+	if (value->type == JSON_DOUBLE)
+		*tmp = value->value.real;
+	else
+		*tmp = value->value.integer;
 	return tmp;
 }
 
