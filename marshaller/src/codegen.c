@@ -36,7 +36,7 @@ void generatePreamble(FILE* output, char* files[], int fileno) {
 	
 	fprintf(output, "\n");
 	fprintf(output, "extern void _marshallPanic(const char*, const char*);\n");
-	fprintf(output, "extern void _registerMarshaller(int, const char**, jsonValue_t*(*)(void*), void*(*)(jsonValue_t*));\n");
+	fprintf(output, "extern void _registerMarshaller(int, const char**, jsonValue_t*(*)(void*), void*(*)(jsonValue_t*), void(*)(void*));\n");
 	fprintf(output, "\n");
 }
 
@@ -138,11 +138,39 @@ char* generateUnmarshallFunction(FILE* output, struct structinfo* info, char* su
 	return functionName;
 }
 
+char* generateFreeFunction(FILE* output, struct structinfo* info, char* suffix) {
+	#define FREE_FUNCTION_PREFIX "_json_free_value_"
+
+	char* functionName = malloc(strlen(FREE_FUNCTION_PREFIX) + strlen(suffix) + 1);
+	if (functionName == NULL) {
+		panic("malloc");
+	}
+	strcpy(functionName, FREE_FUNCTION_PREFIX);
+	strcat(functionName, suffix);
+	
+	fprintf(output, "static void %s(void* _d) {\n", functionName);
+	fprintf(output, "\tif (_d == NULL)\n");
+	fprintf(output, "\t\treturn;\n");
+	fprintf(output, "\t%s* d = (%s*) _d;\n", info->names[0], info->names[0]);
+	for (size_t i = 0; i < info->memberno; i++) {
+		struct memberinfo* member = info->members[i];
+		if (member->type->isPointer || strcmp(member->type->type, "string") == 0) {
+			fprintf(output, "\t_json_free_struct(\"%s\", (void*) d->%s);\n", member->type->type, member->name);
+		}	
+	}
+	fprintf(output, "\tfree(d);\n");
+	fprintf(output, "}\n\n");
+	
+	return functionName;
+}
+
 void generateCodeStruct(FILE* output, struct structinfo* info) {
 	char* suffix = fixStructName(info->names[0]);
 	
 	char* marshall = generateMarshallFunction(output, info, suffix);
 	char* unmarshall = generateUnmarshallFunction(output, info, suffix);
+	char* freeStruct = generateFreeFunction(output, info, suffix);
+	
 	
 	fprintf(output, "__attribute__((constructor)) static void _register_marshaller_%s_() {\n", suffix);
 	int namesno = info->names[1] == 0 ? 1 : 2;
@@ -150,7 +178,7 @@ void generateCodeStruct(FILE* output, struct structinfo* info) {
 	fprintf(output, "\ttmp[0] = \"%s\";\n", info->names[0]);
 	if (namesno > 1)
 		fprintf(output, "\ttmp[1] = \"%s\";\n", info->names[1]);
-	fprintf(output, "\t_registerMarshaller(%d, tmp, &%s, &%s);\n", namesno, marshall, unmarshall);
+	fprintf(output, "\t_registerMarshaller(%d, tmp, &%s, &%s, &%s);\n", namesno, marshall, unmarshall, freeStruct);
 	fprintf(output, "}\n\n");
 	
 	free(suffix);
