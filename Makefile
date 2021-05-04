@@ -1,5 +1,5 @@
 CC       = gcc
-CFLAGS   = -std=c99 -Wall -D_POSIX_C_SOURCE=201112L -D_XOPEN_SOURCE=500 -D_GNU_SOURCE -static -g
+CFLAGS   = -std=c99 -Wall -D_POSIX_C_SOURCE=201112L -D_XOPEN_SOURCE=500 -D_GNU_SOURCE -g
 LD       = gcc
 LDFLAGS  = 
 AR       = ar
@@ -12,7 +12,7 @@ SO_LIB_NAME = libcson.so
 OBJS     = obj/base.o obj/parse.o obj/query.o obj/stringify.o
 DEPS     = $(OBJS:%.o=%.d)
 
-all: $(A_LIB_NAME) $(SO_LIB_NAME) $(BIN_NAME) test
+all: $(A_LIB_NAME) $(SO_LIB_NAME) $(BIN_NAME)
 
 
 $(BIN_NAME): obj/demo.o $(OBJS)
@@ -45,6 +45,12 @@ marshaller/gen/demo.tab.c: marshaller/demo/demo.h marshaller/marshaller-gen
 	
 marshaller/marshaller-gen:
 	$(MAKE) -C marshaller/ marshaller-gen
+
+marshaller-test: marshaller/gen/test.tab.c marshaller/test/test.c marshaller/lib/marshaller.c $(A_LIB_NAME)
+	$(CC) -g -Imarshaller/test/ -Isrc/ -Imarshaller/lib/ -o $@ $^
+
+marshaller/gen/test.tab.c: marshaller/test/test*.h marshaller/marshaller-gen
+	./marshaller/marshaller-gen -o $@ marshaller/test/test*.h
 
 clean:
 	@echo "Cleaning up..."
