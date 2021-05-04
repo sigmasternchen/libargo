@@ -36,7 +36,7 @@ void generatePreamble(FILE* output, char* files[], int fileno) {
 	
 	fprintf(output, "\n");
 	fprintf(output, "extern void _marshallPanic(const char*, const char*);\n");
-	fprintf(output, "extern void _registerMarshaller(int, const char**, jsonValue_t*(*)(void*), void*(*)(jsonValue_t*), void(*)(void*));\n");
+	fprintf(output, "extern void _registerMarshaller(int, const char**, jsonValue_t*(*)(void*), void*(*)(jsonValue_t*), void(*)(void*, bool));\n");
 	fprintf(output, "\n");
 }
 
@@ -150,17 +150,28 @@ char* generateFreeFunction(FILE* output, struct structinfo* info, char* suffix) 
 	strcpy(functionName, FREE_FUNCTION_PREFIX);
 	strcat(functionName, suffix);
 	
-	fprintf(output, "static void %s(void* _d) {\n", functionName);
+	fprintf(output, "static void %s(void* _d, bool this) {\n", functionName);
 	fprintf(output, "\tif (_d == NULL)\n");
 	fprintf(output, "\t\treturn;\n");
 	fprintf(output, "\t%s* d = (%s*) _d;\n", info->names[0], info->names[0]);
 	for (size_t i = 0; i < info->memberno; i++) {
 		struct memberinfo* member = info->members[i];
 		if (member->type->isPointer || strcmp(member->type->type, "string") == 0) {
-			fprintf(output, "\t_json_free_struct(\"%s\", (void*) d->%s);\n", member->type->type, member->name);
-		}	
+			fprintf(output, "\t_json_free_struct(\"%s\", (void*) d->%s, true);\n", member->type->type, member->name);
+		} else if (!(strcmp(member->type->type, "char") == 0 ||
+		             strcmp(member->type->type, "short") == 0 ||
+		             strcmp(member->type->type, "int") == 0 ||
+		             strcmp(member->type->type, "long") == 0 ||
+		             strcmp(member->type->type, "long long") == 0 ||
+		             strcmp(member->type->type, "float") == 0 ||
+		             strcmp(member->type->type, "double") == 0 ||
+		             strcmp(member->type->type, "bool") == 0
+		)) {
+			fprintf(output, "\t_json_free_struct(\"%s\", (void*) &(d->%s), false);\n", member->type->type, member->name);
+		}
 	}
-	fprintf(output, "\tfree(d);\n");
+	fprintf(output, "\tif (this)\n");
+	fprintf(output, "\t\tfree(d);\n");
 	fprintf(output, "}\n\n");
 	
 	return functionName;

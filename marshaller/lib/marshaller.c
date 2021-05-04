@@ -20,7 +20,7 @@ static struct marshaller {
 	const char* name;
 	jsonValue_t* (*marshaller)(void*);
 	void* (*unmarshaller)(jsonValue_t*);
-	void (*free)(void*);
+	void (*free)(void*, bool);
 }* marshallerList = NULL;
 static size_t marshallerListLength = 0;
 
@@ -34,7 +34,7 @@ static struct marshaller* findMarshaller(const char* type) {
 	return NULL;
 }
 
-void _registerMarshaller(int namesCount, const char** names, jsonValue_t* (*marshaller)(void*),  void* (*unmarshaller)(jsonValue_t*), void (*structFree)(void*)) {
+void _registerMarshaller(int namesCount, const char** names, jsonValue_t* (*marshaller)(void*),  void* (*unmarshaller)(jsonValue_t*), void (*structFree)(void*, bool)) {
 	marshallerList = realloc(marshallerList, (sizeof(struct marshaller)) * (marshallerListLength + namesCount));
 	if (marshallerList == NULL) {
 		_marshallPanic(names[0], NULL);
@@ -282,7 +282,7 @@ void* _json_unmarshall(const char* type, const char* json) {
 	return tmp;
 }
 
-void _json_free_struct(const char* type, void* value) {
+void _json_free_struct(const char* type, void* value, bool this) {
 	if (value == NULL) {
 		return;
 	} else if (strcmp(type, "char") == 0 ||
@@ -295,12 +295,13 @@ void _json_free_struct(const char* type, void* value) {
               strcmp(type, "bool") == 0 ||
               strcmp(type, "string") == 0
 	) {
-		free(value);
+		if (this)
+			free(value);
 	} else {
 		struct marshaller* marshaller = findMarshaller(type);
 		if (marshaller == NULL) {
 			_marshallPanic(type, "unknown type");
 		}
-		marshaller->free(value);
+		marshaller->free(value, this);
 	}
 }
