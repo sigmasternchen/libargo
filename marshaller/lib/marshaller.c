@@ -73,11 +73,11 @@ static jsonValue_t* json_marshall_long_long(void* value) {
 }
 
 static jsonValue_t* json_marshall_float(void* value) {
-	return json_long(*((float*) value));
+	return json_double(*((float*) value));
 }
 
 static jsonValue_t* json_marshall_double(void* value) {
-	return json_long(*((double*) value));
+	return json_double(*((double*) value));
 }
 
 static jsonValue_t* json_marshall_string(void* value) {
