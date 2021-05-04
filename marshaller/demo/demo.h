@@ -4,13 +4,13 @@
 
 typedef struct {
 	long long uid;
-	const char* username;
-	const char* email;
+	char* username;
+	char* email;
 } user_t;
 
 typedef struct {
-	const char* name;
-	const char* content;
+	char* name;
+	char* content;
 	long* views;
 	user_t user;
 } post_t;

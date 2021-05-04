@@ -29,12 +29,16 @@ int main() {
 	printf("User.Email:    %s\n", post->user.email);
 	printf("\n");
 	
+	free(post->content);
 	post->content = "Just do it.";
 	
 	char* newJson = json_marshall(post_t, post);
 	printf("%s\n", newJson);
-	
 	free(newJson);
+	
+	// set to NULL so it doesn't get freed
+	post->content = NULL;
+	json_free_struct(post_t, post);
 
 	return 0;
 }
