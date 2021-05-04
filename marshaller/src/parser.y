@@ -63,10 +63,10 @@ declars: /* empty */
 				{
 					$$ = newDeclarsInfo();
 				}
-     | declar SEMICOLON declars
+     | declars declar SEMICOLON 
      			{
-     				$$ = $3;
-     				addStruct($3, $1);
+     				$$ = $1;
+     				addStruct($$, $2);
      			}
 ;
 
@@ -104,10 +104,10 @@ structmembers: /* empty */
 				{
 					$$ = newStructInfo();
 				}
-             | structmember SEMICOLON structmembers
+             | structmembers structmember SEMICOLON
 				{
-					$$ = $3;
-					addMember($$, $1);
+					$$ = $1;
+					addMember($$, $2);
 				}
 ;
 
