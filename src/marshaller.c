@@ -3,8 +3,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include <json.h>
-
+#include "json.h"
 #include "marshaller.h"
 
 void _marshallPanic(const char* name, const char* reason) {

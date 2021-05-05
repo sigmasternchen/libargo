@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include "json.h"
+#include <json.h>
 
 
 bool global = true;

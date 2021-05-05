@@ -5,17 +5,23 @@ LDFLAGS  =
 AR       = ar
 ARFLAGS  = rcs
 
-BIN_NAME = demo
+LEX = flex
+YACC = bison
+YFLAGS = -y -d
+
+MARSHALLER_GEN = marshaller-gen
+
 A_LIB_NAME = libcson.a
 SO_LIB_NAME = libcson.so
 
-OBJS     = obj/base.o obj/parse.o obj/query.o obj/stringify.o
+OBJS     = obj/base.o obj/parse.o obj/query.o obj/stringify.o obj/marshaller.o
 DEPS     = $(OBJS:%.o=%.d)
 
-all: $(A_LIB_NAME) $(SO_LIB_NAME) $(BIN_NAME)
+all: $(A_LIB_NAME) $(SO_LIB_NAME) tests
 
-$(BIN_NAME): obj/demo.o $(OBJS)
-	$(LD) $(LDFLAGS) -o $@ $^
+tests: json-test marshaller-test
+	./json-test
+	./marshaller-test
 
 $(A_LIB_NAME): CFLAGS += -fPIC
 $(A_LIB_NAME): $(OBJS)
@@ -25,46 +31,57 @@ $(SO_LIB_NAME): CFLAGS += -fPIC
 $(SO_LIB_NAME): $(OBJS)
 	$(LD) -shared -o $@ $^
 
-marshaller-lib: $(A_LIB_NAME) obj/marshaller.o
-	$(AR) rs $(A_LIB_NAME) obj/marshaller.o
-
-test: obj/test.o $(OBJS)
-	$(LD) $(LDFLAGS) -o $@ $^
-
 -include $(DEPS)
-
-obj/marshaller.o: CFLAGS += -Isrc/
-obj/marshaller.o: marshaller/lib/marshaller.c
-	$(CC) $(CFLAGS) -MMD -c -o $@ $<
 
 obj/%.o: src/%.c obj
 	$(CC) $(CFLAGS) -MMD -c -o $@ $<
 
 obj:
-	@mkdir -p obj
+	mkdir -p obj
 
-marshaller-demo: marshaller/gen/demo.tab.c marshaller/demo/demo.c marshaller/lib/marshaller.c $(A_LIB_NAME)
-	$(CC) $(CFLAGS) -Imarshaller/demo/ -Isrc/ -Imarshaller/lib/ -o $@ $^
+$(MARSHALLER_GEN): marshaller/codegen.c gen/lex.yy.c gen/y.tab.c
+	$(CC) $(CFLAGS) -Imarshaller/ -o $@ $^
 
-marshaller/gen/demo.tab.c: marshaller/demo/demo.h marshaller/marshaller-gen
-	./marshaller/marshaller-gen -o $@ $<
-	
-marshaller/marshaller-gen:
-	$(MAKE) -C marshaller/ marshaller-gen
+gen/y.tab.c gen/y.tab.h: marshaller/parser.y gen
+	$(YACC) $(YFLAGS) $<
+	mv y.tab.c gen/
+	mv y.tab.h gen/
 
-marshaller-test: marshaller/gen/test.tab.c marshaller/test/test.c marshaller/lib/marshaller.c $(A_LIB_NAME)
-	$(CC) -g -Imarshaller/test/ -Isrc/ -Imarshaller/lib/ -o $@ $^
+gen/lex.yy.c: marshaller/scanner.l gen/y.tab.h gen
+	$(LEX) $<
+	mv lex.yy.c gen/
 
-marshaller/gen/test.tab.c: marshaller/test/test*.h marshaller/marshaller-gen
-	./marshaller/marshaller-gen -o $@ marshaller/test/test*.h
+gen:
+	mkdir -p gen/
+
+
+json-demo: demo/json.c $(A_LIB_NAME)
+	$(CC) $(CFLAGS) -Isrc/ -o $@ $^
+
+marshaller-demo: gen/demo.tab.c demo/marshaller.c $(A_LIB_NAME)
+	$(CC) $(CFLAGS) -Isrc/ -Idemo/ -Isrc/ -o $@ $^
+
+gen/demo.tab.c: demo/demo.h $(MARSHALLER_GEN)
+	$(MARSHALLER_GEN) -o $@ $<
+
+
+json-test: test/json.c $(A_LIB_NAME)
+	$(CC) $(CFLAGS) -Isrc/ -o $@ $^
+
+marshaller-test: gen/test.tab.c test/marshaller.c $(A_LIB_NAME)
+	$(CC) -g -Itest/ -Isrc/ -o $@ $^
+
+gen/test.tab.c: test/test*.h $(MARSHALLER_GEN)
+	./$(MARSHALLER_GEN) -o $@ test/test*.h
 
 clean:
 	@echo "Cleaning up..."
 	@rm -f obj/*.o
 	@rm -f obj/*.d
-	@rm -f test
-	@rm -f $(BIN_NAME)
+	@rm -f gen/*.c
 	@rm -f $(A_LIB_NAME)
 	@rm -f $(SO_LIB_NAME)
-	@rm -f marshaller-demo marshaller-test
-	$(MAKE) -C marshaller/ clean
+	@rm -f json-demo
+	@rm -f json-test
+	@rm -f marshaller-demo
+	@rm -f marshaller-test

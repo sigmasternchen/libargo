@@ -193,6 +193,8 @@ struct structinfo* newStructInfo() {
 	info->names[1] = NULL;
 	info->memberno = 0;
 	info->members = NULL;
+	
+	return info;
 }
 
 struct declarsinfo* newDeclarsInfo() {
