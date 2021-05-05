@@ -22,7 +22,9 @@ const_string			"const"{whitespace}*{string}
 
 %option noyywrap
 %option nodefault
-%option yylineno 
+%option nounput
+%option noinput
+%option yylineno
 
 %x COMMENT
 %%

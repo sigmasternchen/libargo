@@ -69,7 +69,7 @@ char* generateMarshallFunction(FILE* output, struct structinfo* info, char* suff
 	fprintf(output, "\t%s* d = (%s*) _d;\n", info->names[0], info->names[0]);
 	fprintf(output, "\tif (d == NULL)\n");
 	fprintf(output, "\t\treturn json_null();\n");
-	fprintf(output, "\treturn json_object(true, %d,\n", info->memberno);
+	fprintf(output, "\treturn json_object(true, %ld,\n", info->memberno);
 
 	for (size_t i = 0; i < info->memberno; i++) {
 		struct memberinfo* member = info->members[i];

@@ -14,7 +14,7 @@ typedef struct {
 	
 	bool boolValue;
 	
-	const char* stringValue;
+	char* stringValue;
 	char* stringValue2;
 	
 	struct_t structValue;

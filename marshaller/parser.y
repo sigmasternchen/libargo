@@ -133,7 +133,7 @@ type: STDINT		{ yyerror(filename, ERROR("stdint types are not yet supported")); 
     | ID				{ $$ = newTypeInfo(false, $1); }
     | type POINTER
 				{
-					if ($1->isPointer || $1->type == "string") {
+					if ($1->isPointer || strcmp($1->type, "string") == 0) {
 						yyerror(filename, ERROR("multiple pointer types are not supported"));
 						YYERROR;
 					} else {
