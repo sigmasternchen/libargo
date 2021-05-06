@@ -342,6 +342,6 @@ Message | Meaning
 `... not yet supported` | The respective feature or type is not yet implemented.
 `... not supported` | The respective feature or type is not supported and probably won't ever be.
 `const char* struct members are discouraged` | The use of `const char*` doesn't make sense because all the data will be on the heap anyway. `const` would just confuse.
-`double pointer type; assuming dynamic array` | Not an error. Just a hint that double pointer types will be assumed to be dynamic arrays - which may not be but the user intended.
+`double pointer type; assuming dynamic array` | Not an error. Just a hint that double pointer types will be assumed to be dynamic arrays - which may not be what the user intended.
 `unknown type` | The marshaller for the given type is not present (not linked).
 `marshaller for name already present` | The type has multiple marshallers.
