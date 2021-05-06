@@ -18,6 +18,7 @@ void _marshallPanic(const char* name, const char* reason) {
 
 static struct marshaller {
 	const char* name;
+	size_t size;
 	jsonValue_t* (*marshaller)(void*);
 	void* (*unmarshaller)(jsonValue_t*);
 	void (*free)(void*, bool);
@@ -34,7 +35,7 @@ static struct marshaller* findMarshaller(const char* type) {
 	return NULL;
 }
 
-void _registerMarshaller(int namesCount, const char** names, jsonValue_t* (*marshaller)(void*),  void* (*unmarshaller)(jsonValue_t*), void (*structFree)(void*, bool)) {
+void _registerMarshaller(int namesCount, const char** names, size_t size, jsonValue_t* (*marshaller)(void*),  void* (*unmarshaller)(jsonValue_t*), void (*structFree)(void*, bool)) {
 	marshallerList = realloc(marshallerList, (sizeof(struct marshaller)) * (marshallerListLength + namesCount));
 	if (marshallerList == NULL) {
 		_marshallPanic(names[0], NULL);
@@ -47,6 +48,7 @@ void _registerMarshaller(int namesCount, const char** names, jsonValue_t* (*mars
 	
 		marshallerList[marshallerListLength++] = (struct marshaller) {
 			.name = names[i],
+			.size = size,
 			.marshaller = marshaller,
 			.unmarshaller = unmarshaller,
 			.free = structFree
@@ -91,6 +93,10 @@ static jsonValue_t* json_marshall_bool(void* value) {
 }
 
 jsonValue_t* _json_marshall_array_value(const char* type, void* value) {
+	if (value == NULL) {
+		return json_null();
+	}
+
 	size_t size;
 	for (size = 0; *(((void**) value) + size) != NULL; size++);
 	
@@ -268,6 +274,24 @@ static void* json_unmarshall_string(jsonValue_t* value) {
 	return tmp;
 }
 
+void* _json_unmarshall_array_value(const char* type, jsonValue_t* value) {
+	if (value->type != JSON_ARRAY)
+		return NULL;
+		
+	size_t size = value->value.array.size;
+	
+	void** array = malloc(sizeof(void*) * (size + 1));
+	if (array == NULL)
+		return NULL;
+		
+	for (size_t i = 0; i < size; i++) {
+		array[i] = _json_unmarshall_value(type, &(value->value.array.entries[i]));
+	}
+	array[size] = NULL;
+	
+	return array;
+}
+
 void* _json_unmarshall_value(const char* type, jsonValue_t* value) {
 	if (value->type == JSON_NULL) {
 		return NULL;
@@ -304,7 +328,23 @@ void* _json_unmarshall(const char* type, const char* json) {
 		return NULL;
 	}
 	
+	if (value->type == JSON_ARRAY) {
+		json_free(value);
+		return NULL;
+	}
+	
 	void* tmp = _json_unmarshall_value(type, value);
+	json_free(value);
+	return tmp;
+}
+
+void* _json_unmarshall_array(const char* type, const char* json) {
+	jsonValue_t* value = json_parse(json);
+	if (value == NULL) {
+		return NULL;
+	}
+
+	void* tmp = _json_unmarshall_array_value(type, value);
 	json_free(value);
 	return tmp;
 }

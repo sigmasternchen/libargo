@@ -36,7 +36,7 @@ void generatePreamble(FILE* output, char* files[], int fileno) {
 	
 	fprintf(output, "\n");
 	fprintf(output, "extern void _marshallPanic(const char*, const char*);\n");
-	fprintf(output, "extern void _registerMarshaller(int, const char**, jsonValue_t*(*)(void*), void*(*)(jsonValue_t*), void(*)(void*, bool));\n");
+	fprintf(output, "extern void _registerMarshaller(int, const char**, size_t, jsonValue_t*(*)(void*), void*(*)(jsonValue_t*), void(*)(void*, bool));\n");
 	fprintf(output, "\n");
 }
 
@@ -121,21 +121,31 @@ char* generateUnmarshallFunction(FILE* output, struct structinfo* info, char* su
 	for (size_t i = 0; i < info->memberno; i++) {
 		struct memberinfo* member = info->members[i];
 		fprintf(output, "\ttmpValue = json_object_get(v, \"%s\");\n", member->name);
-		fprintf(output, "\ttmp = _json_unmarshall_value(\"%s\", tmpValue);\n", member->type->type);
-		fprintf(output, "\tjson_free(tmpValue);\n");
-		if (strcmp(member->type->type, "string") == 0) {
-			fprintf(output, "\td->%s = (char*) tmp;\n", member->name);
-		} else if (member->type->isPointer) {
-			fprintf(output, "\td->%s = (%s*) tmp;\n", member->name, member->type->type);
+		if (member->type->isArray) {
+			fprintf(output, "\ttmp = _json_unmarshall_array_value(\"%s\", tmpValue);\n", member->type->type);
+			fprintf(output, "\tjson_free(tmpValue);\n");
+			const char* type = member->type->type;
+			if (strcmp(type, "string") == 0) {
+				type = "char";
+			}
+			fprintf(output, "\td->%s = (%s**) tmp;\n", member->name, type);
 		} else {
-			fprintf(output, "\tif (tmp == NULL) {\n");
-			fprintf(output, "\t\terrno = EINVAL;\n");
-			fprintf(output, "\t\tfree(d);\n");
-			fprintf(output, "\t\treturn NULL;\n");
-			fprintf(output, "\t} else {\n");
-			fprintf(output, "\t\td->%s = *((%s*) tmp);\n", member->name, member->type->type);
-			fprintf(output, "\t\tfree(tmp);\n");
-			fprintf(output, "\t}\n");
+			fprintf(output, "\ttmp = _json_unmarshall_value(\"%s\", tmpValue);\n", member->type->type);
+			fprintf(output, "\tjson_free(tmpValue);\n");
+			if (strcmp(member->type->type, "string") == 0) {
+				fprintf(output, "\td->%s = (char*) tmp;\n", member->name);
+			} else if (member->type->isPointer) {
+				fprintf(output, "\td->%s = (%s*) tmp;\n", member->name, member->type->type);
+			} else {
+				fprintf(output, "\tif (tmp == NULL) {\n");
+				fprintf(output, "\t\terrno = EINVAL;\n");
+				fprintf(output, "\t\tfree(d);\n");
+				fprintf(output, "\t\treturn NULL;\n");
+				fprintf(output, "\t} else {\n");
+				fprintf(output, "\t\td->%s = *((%s*) tmp);\n", member->name, member->type->type);
+				fprintf(output, "\t\tfree(tmp);\n");
+				fprintf(output, "\t}\n");
+			}
 		}
 	}
 	
@@ -199,7 +209,7 @@ void generateCodeStruct(FILE* output, struct structinfo* info) {
 	fprintf(output, "\ttmp[0] = \"%s\";\n", info->names[0]);
 	if (namesno > 1)
 		fprintf(output, "\ttmp[1] = \"%s\";\n", info->names[1]);
-	fprintf(output, "\t_registerMarshaller(%d, tmp, &%s, &%s, &%s);\n", namesno, marshall, unmarshall, freeStruct);
+	fprintf(output, "\t_registerMarshaller(%d, tmp, sizeof(%s), &%s, &%s, &%s);\n", namesno, info->names[0], marshall, unmarshall, freeStruct);
 	fprintf(output, "}\n\n");
 	
 	free(suffix);

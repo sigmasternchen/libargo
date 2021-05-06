@@ -16,7 +16,10 @@ int main() {
 		\"user\": {\
 			\"uid\": 1000,\
 			\"username\": \"overflowerror\",\
-			\"aliases\": null,\
+			\"aliases\": [\
+				\"foo\",\
+				\"bar\"\
+			],\
 			\"email\": \"overflow@persei.net\"\
 		}\
 	}";
@@ -29,7 +32,11 @@ int main() {
 	printf("User.Uid:      %lld\n", post->user.uid);
 	printf("User.Username: %s\n", post->user.username);
 	printf("User.Email:    %s\n", post->user.email);
-	printf("\n");
+	printf("User.Aliases:  ");
+	for (size_t i = 0; post->user.aliases[i] != NULL; i++) {
+		printf("%s ", post->user.aliases[i]);
+	}	
+	printf("\n\n");
 	
 	free(post->content);
 	post->content = "Just do it.";
