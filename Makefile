@@ -81,7 +81,10 @@ clean:
 	@rm -f gen/*.c
 	@rm -f $(A_LIB_NAME)
 	@rm -f $(SO_LIB_NAME)
+	@rm -f $(MARSHALLER_GEN)
+	
 	@rm -f json-demo
 	@rm -f json-test
+	
 	@rm -f marshaller-demo
 	@rm -f marshaller-test
