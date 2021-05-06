@@ -34,6 +34,9 @@ jsonValue_t* json_query(jsonValue_t* value, const char* query) {
 	char buffer[JSON_QUERY_BUFFER_SIZE];
 
 	value = json_clone(value);
+	if (value == NULL) {
+		return NULL;
+	}
 
 	while(true) {	
 		if (query[0] == '\0')

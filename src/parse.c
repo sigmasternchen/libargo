@@ -16,12 +16,20 @@ struct parserToken {
 
 #define PARSER_TOKEN_CHUNK_SIZE (1024)
 
-void addToParserToken(struct parserToken* token, char c) {
+int addToParserToken(struct parserToken* token, char c) {
 	if (token->length % PARSER_TOKEN_CHUNK_SIZE == 0) {
-		token->token = realloc(token->token, sizeof(char) * (token->length / PARSER_TOKEN_CHUNK_SIZE + 1) * PARSER_TOKEN_CHUNK_SIZE);
+		char* tmp = realloc(token->token, sizeof(char) * (token->length / PARSER_TOKEN_CHUNK_SIZE + 1) * PARSER_TOKEN_CHUNK_SIZE);
+		if (tmp == NULL) {
+			free(token->token);
+			token->token = NULL;
+			return -1;
+		}
+		token->token = tmp;
 	}
 	
 	token->token[token->length++] = c;
+	
+	return 0;
 }
 
 void freeParserToken(struct parserToken* token) {
@@ -51,7 +59,10 @@ typedef struct {
 #define JSON_PARSER_STATE_DOUBLE     (50)
 
 jsonParsedValue_t json_parse_long(jsonParsedValue_t value, struct parserToken token) {	
-	addToParserToken(&token, '\0');
+	if (addToParserToken(&token, '\0') < 0) {
+		value.errorFormat = "internal error while parsing numgber";
+		return value;
+	}
 
 	char* endptr;
 	long long l = strtoll(token.token, &endptr, 10);
@@ -68,7 +79,10 @@ jsonParsedValue_t json_parse_long(jsonParsedValue_t value, struct parserToken to
 }
 
 jsonParsedValue_t json_parse_double(jsonParsedValue_t value, struct parserToken token) {	
-	addToParserToken(&token, '\0');
+	if (addToParserToken(&token, '\0') < 0) {	
+		value.errorFormat = "internal error while parsing numgber";
+		return value;
+	}
 
 	char* endptr;
 	double d = strtod(token.token, &endptr);
@@ -138,7 +152,10 @@ jsonParsedValue_t json_parse_r(const char* string, size_t index, size_t line, si
 					case '8':
 					case '9':
 					case '-':
-						addToParserToken(&token, c);
+						if (addToParserToken(&token, c) < 0) {
+							value.errorFormat = "internal error in line %ld";
+							return value;
+						}
 						state = JSON_PARSER_STATE_LONG;
 						break;
 					default:
@@ -161,56 +178,77 @@ jsonParsedValue_t json_parse_r(const char* string, size_t index, size_t line, si
 							value.errorFormat = "illegal character in line %d: '%c'";
 						}
 						
+						freeParserToken(&token);
+						
 						return value;
 				}
 				break;
 			case JSON_PARSER_STATE_STRING:
 				if (!escaped && c == '"') {
-					addToParserToken(&token, '\0');
-					value.okay = true;
+					if (addToParserToken(&token, '\0') < 0) {
+						value.errorFormat = "internal error while parsing string";
+						return value;
+					}
 					value.index = index + 1;
 					value.value.value.string = strdup(token.token);
-					freeParserToken(&token);
+					if (value.value.value.string == NULL) {
+						value.errorFormat = "couldn't strdup while parsing string";
+						
+						freeParserToken(&token);
+						return value;
+					}
 					
+					value.okay = true;
+					
+					freeParserToken(&token);
 					return value;
 				}
 				if (!escaped && c == '\\') {
 					escaped = true;
 					break;
 				} else if (escaped) {
+					int tmp = 0;
 					switch(c) {
 						case 'b':
-							addToParserToken(&token, '\b');
+							tmp = addToParserToken(&token, '\b');
 							break;
 						case 'f':
-							addToParserToken(&token, '\f');
+							tmp = addToParserToken(&token, '\f');
 							break;
 						case 'n':
-							addToParserToken(&token, '\n');
+							tmp = addToParserToken(&token, '\n');
 							break;
 						case 'r':
-							addToParserToken(&token, '\r');
+							tmp = addToParserToken(&token, '\r');
 							break;
 						case 't':
-							addToParserToken(&token, '\t');
+							tmp = addToParserToken(&token, '\t');
 							break;
 						case 'u':
 							value.okay = false;
 							value.index = index;
 							value.errorFormat = "line %ld: \\u-syntax is not supported";
+							freeParserToken(&token);
 							return value;
 							
 						case '"':
 						case '\\':
 						case '/':					
-							addToParserToken(&token, c);
+							tmp = addToParserToken(&token, c);
 							break;
 							
 						default:
-							addToParserToken(&token, '\\');
-							addToParserToken(&token, c);
+							tmp = addToParserToken(&token, '\\');
+							tmp = addToParserToken(&token, c);
 							break;
 					}
+					if (tmp < 0) {
+						value.errorFormat = "internal error while parsing string escape sequence";
+						
+						freeParserToken(&token);
+						return value;
+					}
+					
 					escaped = false;
 				} else {
 					switch(c) {
@@ -222,32 +260,56 @@ jsonParsedValue_t json_parse_r(const char* string, size_t index, size_t line, si
 							value.okay = false;
 							value.index = index;
 							value.errorFormat = "line %ld: control characters are not allowed in json strings";
+				
+							freeParserToken(&token);
 							return value;
 						default:
-							addToParserToken(&token, c);
+							if (addToParserToken(&token, c) < 0) {
+								value.errorFormat = "internal error while parsing string";
+								
+								freeParserToken(&token);
+								return value;
+							}
 							break;
 					}
 				}
 				break;
 			case JSON_PARSER_STATE_LONG:
 				if (c >= '0' && c <= '9') {
-					addToParserToken(&token, c);
+					if (addToParserToken(&token, c) < 0) {
+						value.errorFormat = "internal error while parsing number";
+						
+						freeParserToken(&token);
+						return value;
+					}
 				} else if (c == '.' || c == 'e') {
-					addToParserToken(&token, c);
+					if (addToParserToken(&token, c) < 0) {
+						value.errorFormat = "internal error while parsing number";
+						
+						freeParserToken(&token);
+						return value;
+					}
 					state = JSON_PARSER_STATE_DOUBLE;
 				} else {
 					value.index = index;
 					value = json_parse_long(value, token);
+					
 					freeParserToken(&token);
 					return value;
 				}
 				break;
 			case JSON_PARSER_STATE_DOUBLE:
 				if ((c >= '0' && c <= '9') || c == '.' || c == '+' || c == '-' || c == 'e') {
-					addToParserToken(&token, c);
+					if (addToParserToken(&token, c) < 0) {
+						value.errorFormat = "internal error while parsing number";
+						
+						freeParserToken(&token);
+						return value;
+					}
 				} else {
 					value.index = index;
 					value = json_parse_double(value, token);
+					
 					freeParserToken(&token);
 					return value;
 				}
@@ -265,6 +327,8 @@ jsonParsedValue_t json_parse_r(const char* string, size_t index, size_t line, si
 						
 							value.errorFormat = "line %ld: unexpected '%c'";
 							value.index = index;
+							
+							freeParserToken(&token);
 							return value;
 						}
 						
@@ -286,6 +350,7 @@ jsonParsedValue_t json_parse_r(const char* string, size_t index, size_t line, si
 					if (!entry.okay) {
 						json_free_r(&value.value);
 						
+						freeParserToken(&token);
 						return entry;
 					}
 					
@@ -295,6 +360,8 @@ jsonParsedValue_t json_parse_r(const char* string, size_t index, size_t line, si
 						json_free_r(&value.value);
 						
 						value.errorFormat = "allocation for array failed";
+						
+						freeParserToken(&token);
 						return value;
 					}
 					
@@ -328,6 +395,8 @@ jsonParsedValue_t json_parse_r(const char* string, size_t index, size_t line, si
 						
 							value.errorFormat = "line %ld: unexpected ','; ':' expected";
 							value.index = index;
+							
+							freeParserToken(&token);
 							return value;
 						}
 						
@@ -342,6 +411,8 @@ jsonParsedValue_t json_parse_r(const char* string, size_t index, size_t line, si
 						
 							value.errorFormat = "line %ld: unexpected character ':'";
 							value.index = index;
+							
+							freeParserToken(&token);
 							return value;
 						}
 						
@@ -350,6 +421,8 @@ jsonParsedValue_t json_parse_r(const char* string, size_t index, size_t line, si
 						
 							value.errorFormat = "line %ld: unexpected ':'; key is missing";
 							value.index = index;
+							
+							freeParserToken(&token);
 							return value;
 						}
 						
@@ -363,6 +436,8 @@ jsonParsedValue_t json_parse_r(const char* string, size_t index, size_t line, si
 					
 						value.errorFormat = "line %ld: unexpected '%c'; ',' or '}' expected";
 						value.index = index;
+						
+						freeParserToken(&token);
 						return value;
 					}
 					
@@ -371,6 +446,7 @@ jsonParsedValue_t json_parse_r(const char* string, size_t index, size_t line, si
 					if (!entry.okay) {
 						json_free_r(&value.value);
 						
+						freeParserToken(&token);
 						return entry;
 					}
 					
@@ -379,9 +455,10 @@ jsonParsedValue_t json_parse_r(const char* string, size_t index, size_t line, si
 							json_free_r(&value.value);
 							json_free_r(&entry.value);
 							
-						
 							value.errorFormat = "line %ld: key is missing";
 							value.index = index;
+							
+							freeParserToken(&token);
 							return value;
 						}
 						
@@ -394,6 +471,8 @@ jsonParsedValue_t json_parse_r(const char* string, size_t index, size_t line, si
 							json_free_r(&value.value);
 							
 							value.errorFormat = "allocation for object failed";
+							
+							freeParserToken(&token);
 							return value;
 						}
 						
@@ -414,6 +493,8 @@ jsonParsedValue_t json_parse_r(const char* string, size_t index, size_t line, si
 			default:
 				value.index = index;
 				value.errorFormat = "illegal state in line %ld";
+				
+				freeParserToken(&token);
 				return value;
 		}
 	}
@@ -421,21 +502,22 @@ jsonParsedValue_t json_parse_r(const char* string, size_t index, size_t line, si
 	if (state == JSON_PARSER_STATE_LONG) {
 		value.index = index;
 		value = json_parse_long(value, token);
+		
 		freeParserToken(&token);
 		return value;
 	}
 	if (state == JSON_PARSER_STATE_DOUBLE) {
 		value.index = index;
 		value = json_parse_double(value, token);
+		
 		freeParserToken(&token);
 		return value;
 	}
 	
-	freeParserToken(&token);
-	
 	value.index = index - 1;
 	value.errorFormat = "unexpected end of input on line %ld";
 	
+	freeParserToken(&token);
 	return value;
 }
 
@@ -445,6 +527,7 @@ jsonValue_t* json_parse(const char* string) {
 	jsonParsedValue_t parsedValue = json_parse_r(string, 0, 1, length);
 	
 	if (!parsedValue.okay) {
+		// TODO put in extern global instead
 		printf("%ld\n", parsedValue.index);
 		printf(parsedValue.errorFormat, parsedValue.line, string[parsedValue.index]);
 		printf("\n");
@@ -457,6 +540,11 @@ jsonValue_t* json_parse(const char* string) {
 	}
 	
 	jsonValue_t* value = malloc(sizeof(jsonValue_t));
+	if (value == NULL) {
+		json_free_r(&(parsedValue.value));
+		return NULL;
+	}
+	
 	*value = parsedValue.value;
 	
 	return value;
