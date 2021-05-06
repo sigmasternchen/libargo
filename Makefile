@@ -62,7 +62,7 @@ marshaller-demo: gen/demo.tab.c demo/marshaller.c $(A_LIB_NAME)
 	$(CC) $(CFLAGS) -Isrc/ -Idemo/ -Isrc/ -o $@ $^
 
 gen/demo.tab.c: demo/demo.h $(MARSHALLER_GEN)
-	$(MARSHALLER_GEN) -o $@ $<
+	./$(MARSHALLER_GEN) -o $@ $<
 
 
 json-test: test/json.c $(A_LIB_NAME)
