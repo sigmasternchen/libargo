@@ -6,6 +6,7 @@
 struct typeinfo {
 	char* type;
 	bool isPointer;
+	bool isArray;
 };
 
 struct memberinfo {

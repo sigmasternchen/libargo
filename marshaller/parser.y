@@ -117,6 +117,16 @@ structmember: type ID
 				{
 					$$ = newMemberInfo($1, $2);
 				}
+				| type ID OPEN_BRACKETS NUM CLOSE_BRACKETS
+				{
+					yyerror(filename, ERROR("static array members not yet supported"));
+					YYERROR;
+				}
+				| type ID OPEN_BRACKETS CLOSE_BRACKETS
+				{
+					yyerror(filename, ERROR("flexible array members not supported; use double pointers for dynamic array instead"));
+					YYERROR;
+				}
 ;
 
 type: STDINT		{ yyerror(filename, ERROR("stdint types are not yet supported")); YYERROR; }
@@ -134,8 +144,14 @@ type: STDINT		{ yyerror(filename, ERROR("stdint types are not yet supported")); 
     | type POINTER
 				{
 					if ($1->isPointer || strcmp($1->type, "string") == 0) {
-						yyerror(filename, ERROR("multiple pointer types are not supported"));
-						YYERROR;
+						if ($1->isArray) {
+							yyerror(filename, ERROR("multi pointer types are not supported"));
+							YYERROR;
+						} else {
+							yyerror(filename, INFO("double pointer type; assuming dynamic array"));
+							$$ = $1;
+							$$->isArray = true;
+						}
 					} else {
 						$$ = newTypeInfo(true, $1->type);
 					}
