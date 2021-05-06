@@ -19,9 +19,7 @@ Nevertheless you are welcome to use or modify the code as you like. I also appri
 For the base functionallity there are no dependencies.
 
 The marshaller generator needs `lex` and `yacc`. The `Makefile` uses `flex` and `bison` but I think I only used `lex` and `yacc` functionality respectively.
-Also a `gcc` compatible compiler (or a compiler that supports GCC function attributes) is need. So `clang` should work too.
-
-The `Makefile` is build for `gcc`
+Also a `gcc` compatible compiler (or a compiler that supports GCC function attributes) is needed. So `clang` should work too. The `Makefile` may be changed.
 
 ## Build
 
@@ -48,7 +46,7 @@ Marshaller Test program:
 
 ### Test
 
-To run the test suit just run `make tests`
+To run the test suit just `make tests`
 
 ## Usage (Base Functionallity)
 
@@ -191,13 +189,13 @@ To build to marshaller generator use the following command:
 ./marshaller-gen [-o OUTPUT_FILE] {INPUT_FILE}
 ```
 
-The marshaller generator takes any number of `INPUT_FILE`S (C header files) that contain the struct definitions. If no input file is given `stdin` is used.
+The marshaller generator takes any number of `INPUT_FILEs` (C header files) that contain the struct definitions. If no `INPUT_FILE` is given `stdin` is used.
 
-Using the `-o` option the `OUTPUT_FILE` for the generated C code can be specified. If no OUTPUT_FILE is given `stdout` is used.
+Using the `-o` option the `OUTPUT_FILE` for the generated C code can be specified. If no `OUTPUT_FILE` is given `stdout` is used.
 
 ### Input Specification
 
-Although the `INPUT_FILE`s are just normal C header files the syntax is quite restricted. It is recommended to only put the struct definitions in the input files. Typedefs can be used as long as the struct definition is part of the typedef.
+Although the `INPUT_FILEs` are just normal C header files the syntax is quite restricted. It is recommended to only put the struct definitions in the `INPUT FILEs`. Typedefs can be used as long as the struct definition is part of the typedef.
 
 Examples:
 
@@ -229,7 +227,7 @@ Comments and preprocessor statements will be ignored. Using other language const
 
 #### Supported Types
 
-integer types: `char`, `short`, `int`, `long`, `long long`
+integer types: `char`, `short`, `int`, `long`, `long long`; signed and unsigned
 
 float types: `float`, `double`
 
@@ -253,7 +251,7 @@ The result has to be linked with `libcson.a` or `libcson.so`.
 
 To encode a struct as JSON just use the `json_marshall()` function (declared in `marshaller.h`). This function takes 2 arguments and returns the marshalled struct as a string.
 
-The argument is the type of the struct. The second argument is a pointer to the struct.
+The first argument is the type of the struct. The second argument is a pointer to the struct.
 
 Example:
 
@@ -337,7 +335,7 @@ To build the demo just use `make marshaller-demo`
 ### Error Messages
 
 Message | Meaning
------------------
+--------|--------
 `file limit reached` | By default marshaller-gen only accepts 10 input files. This can be changed in the constant `MAX_FILES` in codegen.c.
 `lexical error in line` | The marshaller generator only supports a very limited syntax for the header file. Make sure only have structs or typedefs in the input files. For more details see Input Specification.
 `syntax error` | See `lexical error in line`.
