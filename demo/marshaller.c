@@ -42,11 +42,10 @@ int main() {
 	post->content = "Just do it.";
 	
 	json_free_prim_array(post->user.aliases);
-	char** aliases = alloca(sizeof(char*) * 3);
-	aliases[0] = "overflowerror";
-	aliases[1] = "overflow";
-	aliases[2] = NULL;
-	post->user.aliases = aliases;
+	post->user.aliases = alloca(sizeof(char*) * 3);
+	post->user.aliases[0] = "overflowerror";
+	post->user.aliases[1] = "overflow";
+	post->user.aliases[2] = NULL;
 	
 	char* newJson = json_marshall(post_t, post);
 	printf("%s\n", newJson);
