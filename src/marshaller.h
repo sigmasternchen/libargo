@@ -14,6 +14,7 @@ void* _json_unmarshall(const char* type, const char* json);
 void* _json_unmarshall_array(const char* type, const char* json);
 
 void _json_free_struct(const char* type, void* value, bool this);
+void _json_free_array(const char* type, void** value);
 
 #define json_marshall(t, v) _json_marshall(# t, (void*) v)
 #define json_marshall_array(t, v) _json_marshall_array(# t, (void*) v)
@@ -21,5 +22,7 @@ void _json_free_struct(const char* type, void* value, bool this);
 #define json_unmarshall_array(t, j) (t*) _json_unmarshall_array(#t, j)
 
 #define json_free_struct(t, v) _json_free_struct(#t, v, true)
+#define json_free_array(t, v) _json_free_array(#t, (void**) v)
+#define json_free_prim_array(v) _json_free_array("int", (void**) v)
 
 #endif

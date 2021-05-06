@@ -41,6 +41,7 @@ int main() {
 	free(post->content);
 	post->content = "Just do it.";
 	
+	json_free_prim_array(post->user.aliases);
 	char** aliases = alloca(sizeof(char*) * 3);
 	aliases[0] = "overflowerror";
 	aliases[1] = "overflow";

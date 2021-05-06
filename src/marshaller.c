@@ -372,3 +372,34 @@ void _json_free_struct(const char* type, void* value, bool this) {
 		marshaller->free(value, this);
 	}
 }
+
+void _json_free_array(const char* type, void** value) {
+	if (value == NULL) {
+		return;
+	} else if (strcmp(type, "char") == 0 ||
+              strcmp(type, "short") == 0 ||
+              strcmp(type, "int") == 0 ||
+              strcmp(type, "long") == 0 ||
+              strcmp(type, "long long") == 0 ||
+              strcmp(type, "float") == 0 ||
+              strcmp(type, "double") == 0 ||
+              strcmp(type, "bool") == 0 ||
+              strcmp(type, "string") == 0
+	) {
+		for (size_t i = 0; value[i] != NULL; i++) {
+			free(value[i]);
+		}
+		free(value);
+	} else {
+		struct marshaller* marshaller = findMarshaller(type);
+		if (marshaller == NULL) {
+			_marshallPanic(type, "unknown type");
+		}
+		
+		for (size_t i = 0; value[i] != NULL; i++) {
+			marshaller->free(value[i], true);
+		}
+		
+		free(value);
+	}
+}

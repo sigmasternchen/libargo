@@ -172,7 +172,9 @@ char* generateFreeFunction(FILE* output, struct structinfo* info, char* suffix) 
 	fprintf(output, "\t%s* d = (%s*) _d;\n", info->names[0], info->names[0]);
 	for (size_t i = 0; i < info->memberno; i++) {
 		struct memberinfo* member = info->members[i];
-		if (member->type->isPointer || strcmp(member->type->type, "string") == 0) {
+		if (member->type->isArray) {
+			fprintf(output, "\t_json_free_array(\"%s\", (void**) d->%s);\n", member->type->type, member->name);
+		} else if (member->type->isPointer || strcmp(member->type->type, "string") == 0) {
 			fprintf(output, "\t_json_free_struct(\"%s\", (void*) d->%s, true);\n", member->type->type, member->name);
 		} else if (!(strcmp(member->type->type, "char") == 0 ||
 		             strcmp(member->type->type, "short") == 0 ||
@@ -184,6 +186,8 @@ char* generateFreeFunction(FILE* output, struct structinfo* info, char* suffix) 
 		             strcmp(member->type->type, "bool") == 0
 		)) {
 			fprintf(output, "\t_json_free_struct(\"%s\", (void*) &(d->%s), false);\n", member->type->type, member->name);
+		} else {
+			// will be freed with this
 		}
 	}
 	fprintf(output, "\tif (this)\n");
