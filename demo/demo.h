@@ -5,6 +5,7 @@
 typedef struct {
 	long long uid;
 	char* username;
+	char** aliases;
 	char* email;
 } user_t;
 

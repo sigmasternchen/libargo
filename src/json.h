@@ -52,6 +52,8 @@ jsonValue_t* json_string(const char* s);
 jsonValue_t* json_array(bool freeAfterwards, size_t size, ...);
 jsonValue_t* json_object(bool freeAfterwards, size_t size, ...);
 
+jsonValue_t* json_array_direct(bool freeAfterwards, size_t size, jsonValue_t* values[]);
+
 void json_print(jsonValue_t* value);
 
 jsonValue_t* json_clone(jsonValue_t* value);

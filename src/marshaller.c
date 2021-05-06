@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <alloca.h>
 
 #include "json.h"
 #include "marshaller.h"
@@ -89,6 +90,22 @@ static jsonValue_t* json_marshall_bool(void* value) {
 	return json_bool(*((bool*) value));
 }
 
+jsonValue_t* _json_marshall_array_value(const char* type, void* value) {
+	size_t size;
+	for (size = 0; *(((void**) value) + size) != NULL; size++);
+	
+	jsonValue_t** array = alloca(size * sizeof(jsonValue_t*));
+	
+	for(size_t i = 0; i < size; i++) {
+		array[i] = _json_marshall_value(type, *(((void**) value) + i));
+		if (array[i] == NULL) {
+			return NULL;
+		}
+	}
+	
+	return json_array_direct(true, size, array);
+}
+
 jsonValue_t* _json_marshall_value(const char* type, void* value) {
 	if (value == NULL) {
 		return json_null();
@@ -120,6 +137,17 @@ jsonValue_t* _json_marshall_value(const char* type, void* value) {
 }
 char* _json_marshall(const char* type, void* value) {
 	jsonValue_t* json = _json_marshall_value(type, value);
+	if (json == NULL)
+		return NULL;
+		
+	char* result = json_stringify(json);
+	json_free(json);
+
+	return result;
+}
+
+char* _json_marshall_array(const char* type, void* value) {
+	jsonValue_t* json = _json_marshall_array_value(type, value);
 	if (json == NULL)
 		return NULL;
 		

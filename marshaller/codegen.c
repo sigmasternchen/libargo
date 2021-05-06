@@ -76,13 +76,19 @@ char* generateMarshallFunction(FILE* output, struct structinfo* info, char* suff
 		
 		fprintf(output, "\t\t\"%s\", ", member->name);
 		
-		const char* reference = "";
+		const char* comma = i == info->memberno - 1 ? "" : ",";
 		
-		if (!member->type->isPointer && strcmp(member->type->type, "string") != 0) {
-			reference = "&";
+		if (member->type->isArray) {
+			fprintf(output, "_json_marshall_array_value(\"%s\", (void*) (d->%s))%s\n", member->type->type, member->name, comma);
+		} else {
+			const char* reference = "";
+			
+			if (!member->type->isPointer && strcmp(member->type->type, "string") != 0) {
+				reference = "&";
+			}
+			
+			fprintf(output, "_json_marshall_value(\"%s\", (void*) %s(d->%s))%s\n", member->type->type, reference, member->name, comma);
 		}
-		
-		fprintf(output, "_json_marshall_value(\"%s\", (void*) %s(d->%s))%s\n", member->type->type, reference, member->name, i == info->memberno - 1 ? "" : ",");
 	}
 	
 	fprintf(output, "\t);\n");

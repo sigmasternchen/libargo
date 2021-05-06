@@ -102,6 +102,23 @@ jsonValue_t* json_array(bool freeAfterwards, size_t size, ...) {
 	
 	return value;
 }
+
+jsonValue_t* json_array_direct(bool freeAfterwards, size_t size, jsonValue_t* values[]) {
+	jsonValue_t* value = json_value();
+	value->type = JSON_ARRAY;
+	value->value.array.size = size;
+	value->value.array.entries = malloc(sizeof(jsonValue_t) * size);
+	
+	for (size_t i = 0; i < size; i++) {
+		value->value.array.entries[i] = *values[i];
+		if (freeAfterwards) {
+			free(values[i]);
+		}
+	}
+	
+	return value;
+}
+
 jsonValue_t* json_object(bool freeAfterwards, size_t size, ...) {
 	jsonValue_t* value = json_value();
 	value->type = JSON_OBJECT;

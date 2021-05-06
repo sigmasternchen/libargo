@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <alloca.h>
 
 #include <json.h>
 #include <marshaller.h>
@@ -15,6 +16,7 @@ int main() {
 		\"user\": {\
 			\"uid\": 1000,\
 			\"username\": \"overflowerror\",\
+			\"aliases\": null,\
 			\"email\": \"overflow@persei.net\"\
 		}\
 	}";
@@ -32,12 +34,19 @@ int main() {
 	free(post->content);
 	post->content = "Just do it.";
 	
+	char** aliases = alloca(sizeof(char*) * 3);
+	aliases[0] = "overflowerror";
+	aliases[1] = "overflow";
+	aliases[2] = NULL;
+	post->user.aliases = aliases;
+	
 	char* newJson = json_marshall(post_t, post);
 	printf("%s\n", newJson);
 	free(newJson);
 	
 	// set to NULL so it doesn't get freed
 	post->content = NULL;
+	post->user.aliases = NULL;
 	json_free_struct(post_t, post);
 
 	return 0;
