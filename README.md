@@ -1,6 +1,6 @@
-# Cson
+# libargo
 
-[![Test Suite](https://github.com/overflowerror/Cson/actions/workflows/test-suite.yml/badge.svg)](https://github.com/overflowerror/Cson/actions/workflows/test-suite.yml)
+[![Test Suite](https://github.com/overflowerror/libargo/actions/workflows/test-suite.yml/badge.svg)](https://github.com/overflowerror/libargo/actions/workflows/test-suite.yml)
 
 ## JSON Library for C
 
@@ -24,10 +24,10 @@ Also a `gcc` compatible compiler (or a compiler that supports GCC function attri
 ## Build
 
 Static lib:
-`make libcson.a`
+`make libargo.a`
 
 Shared lib:
-`make libcson.so`
+`make libargo.so`
 
 Base Demo program:
 `make json-demo`
@@ -245,7 +245,7 @@ pointer types: only single pointers to types that are not lists are allowed (`st
 
 The marshaller generator assumes that `json.h` as well as all input files are in the include path. So make sure to compile the `OUTPUT_FILE` with the correct `-I` options.
 
-The result has to be linked with `libcson.a` or `libcson.so`.
+The result has to be linked with `libargo.a` or `libargo.so`.
 
 ### Marshalling
 

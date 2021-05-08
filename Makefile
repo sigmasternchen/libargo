@@ -11,8 +11,8 @@ YFLAGS = -y -d
 
 MARSHALLER_GEN = marshaller-gen
 
-A_LIB_NAME = libcson.a
-SO_LIB_NAME = libcson.so
+A_LIB_NAME = libargo.a
+SO_LIB_NAME = libargo.so
 
 OBJS     = obj/base.o obj/parse.o obj/query.o obj/stringify.o obj/marshaller.o
 DEPS     = $(OBJS:%.o=%.d)
