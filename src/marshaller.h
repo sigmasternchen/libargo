@@ -19,7 +19,7 @@ void _json_free_array(const char* type, void** value);
 #define json_marshall(t, v) _json_marshall(# t, (void*) v)
 #define json_marshall_array(t, v) _json_marshall_array(# t, (void*) v)
 #define json_unmarshall(t, j) (t*) _json_unmarshall(#t, j)
-#define json_unmarshall_array(t, j) (t*) _json_unmarshall_array(#t, j)
+#define json_unmarshall_array(t, j) (t**) _json_unmarshall_array(#t, j)
 
 #define json_free_struct(t, v) _json_free_struct(#t, v, true)
 #define json_free_array(t, v) _json_free_array(#t, (void**) v)

@@ -226,10 +226,71 @@ void testRecursive() {
 	free(result);
 }
 
+void testArrays() {
+	const char* json = "[1,2,3,4]";
+	
+	int** prim = json_unmarshall_array(int, json);
+	
+	checkNull(prim, "decode prim, not null");
+	checkNull(prim[0], "decode prim[0], not null");
+	checkInt(*prim[0], 1, "decode prim[0], value");
+	checkNull(prim[1], "decode prim[1], not null");
+	checkInt(*prim[1], 2, "decode prim[1], value");
+	checkNull(prim[2], "decode prim[2], not null");
+	checkInt(*prim[2], 3, "decode prim[2], value");
+	checkNull(prim[3], "decode prim[3], not null");
+	checkInt(*prim[3], 4, "decode prim[3], value");
+	checkBool(prim[4] == NULL, "decode prim[4], null");
+	
+	json_free_prim_array(prim);
+	
+	int length = 6;
+	prim = alloca(sizeof(int*) * (length + 1));
+	int* primValues = alloca(sizeof(int) * length);
+	for (int i = 0; i < length; i++) {
+		primValues[i] = i;
+		prim[i] = &primValues[i];
+	}
+	prim[length] = NULL;
+	
+	char* result = json_marshall_array(int, prim);
+	
+	checkNull(result, "encode prim, not null");
+	checkString(result, "[0,1,2,3,4,5]", "encode prim, value");
+	
+	free(result);
+	
+	json = "[{\"intValue\":42},{\"intValue\":1337}]";
+	
+	struct_t** array = json_unmarshall_array(struct_t, json);
+	
+	checkNull(array, "decode struct, not null");
+	checkNull(array[0], "decode struct[0], not null");
+	checkInt(array[0]->intValue, 42, "decode struct[0], value");
+	checkNull(array[1], "decode struct[1], not null");
+	checkInt(array[1]->intValue, 1337, "decode struct[1], value");
+	checkBool(array[2] == NULL, "decode struct[2], null");
+	
+	json_free_array(struct_t, array);
+	
+	array = alloca(sizeof(struct_t) * 1);
+	struct_t value = { .intValue = 2021 };
+	array[0] = &value;
+	array[1] = NULL;
+	
+	result = json_marshall_array(struct_t, array);
+	
+	checkNull(result, "encode struct, not null");
+	checkString(result, "[{\"intValue\":2021}]", "encode struct, value");
+	
+	free(result);
+}
+
 int main(int argc, char** argv) {
 	test("parsing", &testParsing);
 	test("stringify", &testStringify);
 	test("recursive", &testRecursive);
+	test("arrays", &testArrays);
 
 	printf("\nOverall: %s\n", overall ? "OK" : "FAILED");
 	
